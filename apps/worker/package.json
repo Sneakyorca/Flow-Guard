@@ -1,0 +1,28 @@
+{
+  "name": "@flowguard/worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "prototype": "tsx src/cli/prototype.ts",
+    "scan": "tsx src/cli/scan.ts",
+    "run-due": "tsx src/cli/run-due.ts",
+    "dev": "tsx watch src/queue.ts",
+    "queue": "tsx src/queue.ts",
+    "install-browser": "playwright install chromium",
+    "typecheck": "tsc -p tsconfig.json"
+  },
+  "dependencies": {
+    "@anthropic-ai/sdk": "^1.14.0",
+    "@flowguard/shared": "*",
+    "@supabase/supabase-js": "^2.119.2",
+    "bullmq": "^6.7.10",
+    "playwright": "1.63.0",
+    "tsx": "^4.23.15",
+    "zod": "^4.3.5"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "typescript": "^5.9.3"
+  }
+}
