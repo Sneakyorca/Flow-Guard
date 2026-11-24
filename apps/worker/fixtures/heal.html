@@ -1,0 +1,9 @@
+<!doctype html>
+<html><body>
+  <h1>Settings</h1>
+  <!-- The first Save button is disabled, so a click on it times out.
+       Self-healing should exclude it and pick the second one. -->
+  <button disabled>Save</button>
+  <button onclick="document.getElementById('out').textContent='Saved!'">Save</button>
+  <p id="out"></p>
+</body></html>

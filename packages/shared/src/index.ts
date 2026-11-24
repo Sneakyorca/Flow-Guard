@@ -126,6 +126,10 @@ export const StepResult = z.object({
   actions: z.array(ResolvedStep),
   reasoning: z.string(),
   error: z.string().optional(),
+  /** Number of resolve+act attempts (2 = self-healing retry kicked in). */
+  attempts: z.number().default(1),
+  /** True when the first attempt failed and the re-resolved attempt passed. */
+  healed: z.boolean().default(false),
 });
 export type StepResult = z.infer<typeof StepResult>;
 

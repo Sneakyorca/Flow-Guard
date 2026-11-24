@@ -220,7 +220,9 @@ export function splitClauses(instruction: string): string[] {
 
 export const heuristicResolver: Resolver = {
   name: "heuristic",
-  async resolve(input) {
+  async resolve(raw) {
+    // Self-healing retries pass the ids that already failed; drop them from consideration.
+    const input = raw.excludeIds?.length ? { ...raw, nodes: raw.nodes.filter((n) => !raw.excludeIds!.includes(n.id)) } : raw;
     const actions: ResolvedStep[] = [];
     for (const clause of splitClauses(input.instruction)) {
       const lower = clause.toLowerCase().trim();

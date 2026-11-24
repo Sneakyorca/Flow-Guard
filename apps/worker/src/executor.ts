@@ -88,26 +88,19 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
     for (let i = 0; i < steps.length; i++) {
       const instruction = steps[i].instruction;
       if (failedIndex !== null) {
-        results.push({ index: i, instruction, status: "skipped", duration_ms: 0, actions: [], reasoning: "Skipped after an earlier failure." });
+        results.push({ index: i, instruction, status: "skipped", duration_ms: 0, actions: [], reasoning: "Skipped after an earlier failure.", attempts: 0, healed: false });
         continue;
       }
       const s0 = Date.now();
-      let actions: ResolvedStep[] = [];
-      try {
-        const nodes = await takeSnapshot(page);
-        const plan = await resolver.resolve({ instruction, nodes, url: page.url(), title: await page.title() });
-        actions = plan.actions;
-        for (const a of actions) {
-          log(`  [${i + 1}] ${a.action}${a.target_id ? ` #${a.target_id}` : ""}${a.value ? ` "${a.value}"` : ""}`);
-          await execute(page, a, timeout);
-        }
-        results.push({ index: i, instruction, status: "passed", duration_ms: Date.now() - s0, actions, reasoning: actions.map((a) => a.reasoning).join(" ") });
-        log(`✓ step ${i + 1}: ${instruction} (${Date.now() - s0}ms)`);
-      } catch (err) {
+      const attempt = await attemptStep(page, resolver, instruction, timeout, log, i);
+      if (!attempt.error) {
+        results.push({ index: i, instruction, status: "passed", duration_ms: Date.now() - s0, actions: attempt.actions, reasoning: attempt.reasoning, attempts: attempt.attempts, healed: attempt.attempts > 1 });
+        log(`✓ step ${i + 1}: ${instruction} (${Date.now() - s0}ms)${attempt.attempts > 1 ? " [healed on retry]" : ""}`);
+      } else {
         failedIndex = i;
-        errorMessage = `Step ${i + 1} ("${instruction}") failed: ${errMsg(err)}`;
-        results.push({ index: i, instruction, status: "failed", duration_ms: Date.now() - s0, actions, reasoning: actions.map((a) => a.reasoning).join(" "), error: errMsg(err) });
-        log(`✗ step ${i + 1}: ${errMsg(err)}`);
+        errorMessage = `Step ${i + 1} ("${instruction}") failed: ${attempt.error}`;
+        results.push({ index: i, instruction, status: "failed", duration_ms: Date.now() - s0, actions: attempt.actions, reasoning: attempt.reasoning, error: attempt.error, attempts: attempt.attempts, healed: false });
+        log(`✗ step ${i + 1}: ${attempt.error}`);
       }
     }
 
@@ -148,13 +141,61 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
   return diagnostics;
 }
 
+interface Attempt {
+  actions: ResolvedStep[];
+  reasoning: string;
+  attempts: number;
+  error?: string;
+}
+
+/**
+ * Resolve and run one step. If an action (not an assertion) fails, heal once:
+ * wait briefly, take a fresh snapshot, and re-resolve with the error and the
+ * element that didn't work excluded. Assertions are not retried: if the text
+ * isn't there after the full timeout, a second look won't change that.
+ */
+async function attemptStep(page: Page, resolver: Resolver, instruction: string, timeout: number, log: (m: string) => void, i: number): Promise<Attempt> {
+  let previousError: string | undefined;
+  const excludeIds: string[] = [];
+  const history: ResolvedStep[] = [];
+  const reasons: string[] = [];
+  for (let attempt = 1; attempt <= 2; attempt++) {
+    let failedAction: ResolvedStep | undefined;
+    try {
+      const nodes = await takeSnapshot(page);
+      const plan = await resolver.resolve({ instruction, nodes, url: page.url(), title: await page.title(), previousError, excludeIds: excludeIds.length ? [...excludeIds] : undefined });
+      history.push(...plan.actions);
+      reasons.push((attempt > 1 ? "[retry] " : "") + plan.actions.map((a) => a.reasoning).join(" "));
+      for (const a of plan.actions) {
+        failedAction = a;
+        log(`  [${i + 1}${attempt > 1 ? " retry" : ""}] ${a.action}${a.target_id ? ` #${a.target_id}` : ""}${a.value ? ` "${a.value}"` : ""}`);
+        await execute(page, a, timeout);
+      }
+      return { actions: history, reasoning: reasons.join(" "), attempts: attempt };
+    } catch (err) {
+      const msg = errMsg(err);
+      const isAssertion = failedAction?.action === "assert_text" || failedAction?.action === "assert_url";
+      if (attempt === 2 || isAssertion) {
+        return { actions: history, reasoning: reasons.join(" "), attempts: attempt, error: attempt === 2 && previousError ? `${msg} (first attempt: ${previousError})` : msg };
+      }
+      previousError = msg;
+      if (failedAction?.target_id) excludeIds.push(failedAction.target_id);
+      log(`  [${i + 1}] attempt failed (${msg.slice(0, 120)}); re-snapshotting and re-resolving once`);
+      await page.waitForTimeout(1_000);
+      await settle(page);
+    }
+  }
+  return { actions: history, reasoning: reasons.join(" "), attempts: 2, error: previousError };
+}
+
 async function settle(page: Page) {
   await page.waitForLoadState("load", { timeout: 8_000 }).catch(() => {});
   await page.waitForLoadState("networkidle", { timeout: 3_000 }).catch(() => {});
 }
 
 function errMsg(err: unknown): string {
-  const m = err instanceof Error ? err.message : String(err);
+  // Strip ANSI colour codes Playwright adds to its call logs.
+  const m = (err instanceof Error ? err.message : String(err)).replace(/\x1b\[[0-9;]*m/g, "");
   // Playwright messages include a long call log; keep the first lines.
   return m.split("\n").filter(Boolean).slice(0, 3).join(" | ").slice(0, 600);
 }

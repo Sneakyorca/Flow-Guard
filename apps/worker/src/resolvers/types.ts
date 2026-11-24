@@ -7,6 +7,8 @@ export interface ResolveInput {
   title: string;
   /** Previous attempt's error, when re-resolving after a failed action (self-healing retry). */
   previousError?: string;
+  /** Element ids that already failed for this step; the resolver must not pick them again. */
+  excludeIds?: string[];
 }
 
 export interface Resolver {

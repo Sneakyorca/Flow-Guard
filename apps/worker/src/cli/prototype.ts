@@ -4,6 +4,7 @@
  *   npm run prototype
  *   npm run prototype -- --url https://demo.playwright.dev/todomvc --steps "Type \"Buy milk\" into the new todo input and press Enter | Assert \"Buy milk\" is in the list | Click the \"Active\" filter" --viewport desktop
  *
+ * Options: --timeout <seconds per action> (default 10), --resolver heuristic|gemini|groq|anthropic
  * Steps are separated by "|" or newlines (or use --steps-file steps.txt).
  * Output: runs/<runId>/video.webm, diagnostics.json and failure.png (on failure).
  */
@@ -38,7 +39,7 @@ async function main() {
 
   console.log(`FlowGuard prototype · run ${runId}`);
   console.log(`url=${url} viewport=${viewport} resolver=${resolver.name} steps=${steps.length}`);
-  const d = await runFlow({ runId, startUrl: url, steps, viewport, resolver, outDir, log: (m) => console.log(m) });
+  const d = await runFlow({ runId, startUrl: url, steps, viewport, resolver, outDir, stepTimeoutMs: typeof args.timeout === "string" ? Number(args.timeout) * 1000 : undefined, log: (m) => console.log(m) });
 
   console.log("");
   console.log(`${d.status === "PASSING" ? "PASSING" : "FAILED"} in ${(d.duration_ms / 1000).toFixed(1)}s`);

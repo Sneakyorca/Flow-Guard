@@ -24,7 +24,7 @@ export function userPrompt(input: ResolveInput): string {
   return [
     `Current URL: ${input.url}`,
     `Page title: ${input.title}`,
-    input.previousError ? `A previous attempt at this step failed with: ${input.previousError}\nChoose a different element or approach.` : "",
+    input.previousError ? `A previous attempt at this step failed with: ${input.previousError}\nChoose a different element or approach.${input.excludeIds?.length ? ` Do not use these ids again: ${input.excludeIds.map((i) => `#${i}`).join(", ")}.` : ""}` : "",
     `Step: ${input.instruction}`,
     `Elements:\n${renderNodes(input.nodes)}`,
   ].filter(Boolean).join("\n\n");
