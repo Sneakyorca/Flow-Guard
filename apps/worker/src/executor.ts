@@ -187,7 +187,7 @@ async function attemptStep(page: Page, resolver: Resolver, instruction: string, 
       const msg = errMsg(err);
       const isAssertion = failedAction?.action === "assert_text" || failedAction?.action === "assert_url";
       if (attempt === 2 || isAssertion) {
-        return { actions: history, reasoning: reasons.join(" "), attempts: attempt, error: attempt === 2 && previousError ? `${msg} (first attempt: ${previousError})` : msg };
+        return { actions: history, reasoning: reasons.join(" "), attempts: attempt, error: attempt === 2 && previousError && previousError !== msg ? `${msg} (first attempt: ${previousError})` : msg };
       }
       previousError = msg;
       if (failedAction?.target_id) excludeIds.push(failedAction.target_id);

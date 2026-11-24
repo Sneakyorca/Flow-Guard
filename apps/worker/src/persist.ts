@@ -3,7 +3,7 @@ import { readFile } from "node:fs/promises";
 import path from "node:path";
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { FlowRow, type RunDiagnostics } from "@flowguard/shared";
-import { runFlow } from "./executor.js";
+import { runFlowConfirmed } from "./confirm.js";
 import { getResolver } from "./resolvers/index.js";
 import { sendSlackAlert } from "./alerts.js";
 
@@ -57,7 +57,7 @@ export interface PersistedRun {
 export async function executeAndPersist(db: SupabaseClient, flow: FlowWithWorkspace, runsRoot: string): Promise<PersistedRun> {
   const runId = randomUUID();
   const outDir = path.join(runsRoot, runId);
-  const diagnostics = await runFlow({
+  const diagnostics = await runFlowConfirmed({
     runId,
     startUrl: flow.start_url,
     steps: flow.steps_json,
@@ -94,6 +94,8 @@ export async function executeAndPersist(db: SupabaseClient, flow: FlowWithWorksp
       network_errors_json: diagnostics.network_errors,
       steps_result_json: diagnostics.steps,
       explanation: diagnostics.explanation,
+      attempts: diagnostics.attempts,
+      flaky: diagnostics.flaky,
     })
     .select("public_share_token")
     .single();

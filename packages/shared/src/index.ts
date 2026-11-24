@@ -159,6 +159,12 @@ export const RunDiagnostics = z.object({
   failed_step_index: z.number().nullable(),
   error_message: z.string().nullable(),
   explanation: FailureExplanation.nullable().default(null),
+  /** How many full runs it took (2 = the first failed and was re-run before deciding). */
+  attempts: z.number().default(1),
+  /** First run failed, re-run passed: recorded, but nobody gets paged. */
+  flaky: z.boolean().default(false),
+  /** Error from the first attempt when the run was retried. */
+  first_attempt_error: z.string().nullable().default(null),
   steps: z.array(StepResult),
   console_logs: z.array(ConsoleLog),
   network_errors: z.array(NetworkError),
