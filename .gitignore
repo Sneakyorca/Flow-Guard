@@ -1,0 +1,12 @@
+node_modules/
+.next/
+out/
+dist/
+*.tsbuildinfo
+.env
+.env.*
+!.env.example
+# local run artifacts (videos, diagnostics)
+runs/
+apps/worker/runs/
+.DS_Store
