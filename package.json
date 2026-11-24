@@ -1,15 +1,24 @@
 {
   "name": "flowguard",
   "private": true,
-  "description": "Autonomous QA & critical-flow monitoring — Uptime Robot for user journeys.",
-  "workspaces": ["apps/*", "packages/*"],
+  "description": "Autonomous QA & critical-flow monitoring \u2014 Uptime Robot for user journeys.",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
   "scripts": {
     "dev": "npm run dev -w @flowguard/web",
     "dev:worker": "npm run dev -w @flowguard/worker",
     "build": "npm run build -w @flowguard/web",
     "typecheck": "npm run typecheck --workspaces --if-present",
     "prototype": "npm run prototype -w @flowguard/worker --",
-    "scan": "npm run scan -w @flowguard/worker --"
+    "scan": "npm run scan -w @flowguard/worker --",
+    "setup:browser": "npm run install-browser -w @flowguard/worker",
+    "run-due": "npm run run-due -w @flowguard/worker --",
+    "queue": "npm run queue -w @flowguard/worker",
+    "start": "npm run start -w @flowguard/web"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
