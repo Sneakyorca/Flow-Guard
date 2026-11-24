@@ -33,7 +33,7 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
   const { runId, startUrl, steps, viewport, resolver, outDir } = opts;
   const timeout = opts.stepTimeoutMs ?? DEFAULT_STEP_TIMEOUT;
   const log = opts.log ?? (() => {});
-  await mkdir(outDir, { recursive: true });
+  await mkdir(path.join(outDir, "steps"), { recursive: true });
   const videoTmp = path.join(outDir, ".video-tmp");
 
   const started = Date.now();
@@ -102,6 +102,10 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
         results.push({ index: i, instruction, status: "failed", duration_ms: Date.now() - s0, actions: attempt.actions, reasoning: attempt.reasoning, error: attempt.error, attempts: attempt.attempts, healed: false });
         log(`✗ step ${i + 1}: ${attempt.error}`);
       }
+      // Timeline: a small JPEG of the page right after each step (passed or failed).
+      const shot = path.join("steps", `step-${String(i + 1).padStart(2, "0")}.jpg`);
+      const ok = await page.screenshot({ path: path.join(outDir, shot), type: "jpeg", quality: 55 }).then(() => true, () => false);
+      if (ok) results[results.length - 1].screenshot = shot.split(path.sep).join("/");
     }
 
     finalUrl = page.url();

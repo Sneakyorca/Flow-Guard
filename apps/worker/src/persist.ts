@@ -71,6 +71,7 @@ export async function executeAndPersist(db: SupabaseClient, flow: FlowWithWorksp
   const uploads: Array<[string, string, string]> = [["diagnostics.json", path.join(outDir, "diagnostics.json"), "application/json"]];
   if (diagnostics.artifacts.video) uploads.push(["video.webm", diagnostics.artifacts.video, "video/webm"]);
   if (diagnostics.artifacts.failure_screenshot) uploads.push(["failure.png", diagnostics.artifacts.failure_screenshot, "image/png"]);
+  for (const s of diagnostics.steps) if (s.screenshot) uploads.push([s.screenshot, path.join(outDir, s.screenshot), "image/jpeg"]);
   let videoPath: string | null = null;
   for (const [name, file, contentType] of uploads) {
     const { error } = await db.storage.from(REPLAYS_BUCKET).upload(`${prefix}/${name}`, await readFile(file), { contentType, upsert: true });

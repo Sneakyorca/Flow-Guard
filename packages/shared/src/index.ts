@@ -130,6 +130,8 @@ export const StepResult = z.object({
   attempts: z.number().default(1),
   /** True when the first attempt failed and the re-resolved attempt passed. */
   healed: z.boolean().default(false),
+  /** Path (relative to the run folder) of a JPEG taken right after this step. */
+  screenshot: z.string().optional(),
 });
 export type StepResult = z.infer<typeof StepResult>;
 
