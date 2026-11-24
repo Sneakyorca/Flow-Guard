@@ -1,20 +1,30 @@
 {
-  "run_id": "run-20261124-230314-9bcbbd",
+  "run_id": "run-20261124-232814-a49b2b",
   "status": "FAILED",
   "start_url": "https://demo.playwright.dev/todomvc",
   "final_url": "https://demo.playwright.dev/todomvc/#/",
   "viewport": "desktop",
   "resolver": "heuristic",
-  "started_at": "2026-11-24T23:03:14.604Z",
-  "duration_ms": 11884,
+  "started_at": "2026-11-24T23:28:14.910Z",
+  "duration_ms": 4465,
   "failed_step_index": 1,
-  "error_message": "Step 2 (\"Assert \"Buy bread\" is in the list\") failed: Expected text \"Buy bread\" to be visible on https://demo.playwright.dev/todomvc/#/ but it never appeared within 10000ms",
+  "error_message": "Step 2 (\"Assert 'Buy bread' is in the list\") failed: Expected text \"Buy bread\" to be visible on https://demo.playwright.dev/todomvc/#/ but it never appeared within 3000ms",
+  "explanation": {
+    "category": "text_missing",
+    "title": "“Buy bread” never appeared",
+    "detail": "At step 2 (“Assert 'Buy bread' is in the list”), FlowGuard waited for this text but the page never showed it.",
+    "suggestion": "Either the previous action didn't do what it should (look at the step screenshot), or the wording on the page changed.",
+    "evidence": []
+  },
+  "attempts": 1,
+  "flaky": false,
+  "first_attempt_error": null,
   "steps": [
     {
       "index": 0,
-      "instruction": "Type \"Buy milk\" into the new todo input and press Enter",
+      "instruction": "Type 'Buy milk' into the new todo input and press Enter",
       "status": "passed",
-      "duration_ms": 108,
+      "duration_ms": 111,
       "actions": [
         {
           "action": "fill",
@@ -31,13 +41,17 @@
           "reasoning": "Press Enter in the field filled by the previous action."
         }
       ],
-      "reasoning": "Type \"Buy milk\". Matched \"the new todo input\" to #4 textbox \"What needs to be done?\" with score 46 (next best #2 link \"real TodoMVC app.\" scored 4). Press Enter in the field filled by the previous action."
+      "reasoning": "Type \"Buy milk\". Matched \"the new todo input\" to #4 textbox \"What needs to be done?\" with score 46 (next best #2 link \"real TodoMVC app.\" scored 4). Press Enter in the field filled by the previous action.",
+      "attempts": 1,
+      "healed": false,
+      "started_ms": 804,
+      "screenshot": "steps/step-01.jpg"
     },
     {
       "index": 1,
-      "instruction": "Assert \"Buy bread\" is in the list",
+      "instruction": "Assert 'Buy bread' is in the list",
       "status": "failed",
-      "duration_ms": 10013,
+      "duration_ms": 3017,
       "actions": [
         {
           "action": "assert_text",
@@ -48,13 +62,17 @@
         }
       ],
       "reasoning": "Expect \"Buy bread\" to appear somewhere on the page.",
-      "error": "Expected text \"Buy bread\" to be visible on https://demo.playwright.dev/todomvc/#/ but it never appeared within 10000ms"
+      "error": "Expected text \"Buy bread\" to be visible on https://demo.playwright.dev/todomvc/#/ but it never appeared within 3000ms",
+      "attempts": 1,
+      "healed": false,
+      "started_ms": 961,
+      "screenshot": "steps/step-02.jpg"
     }
   ],
   "console_logs": [],
   "network_errors": [],
   "artifacts": {
-    "video": "runs/run-20261124-230314-9bcbbd/video.webm",
-    "failure_screenshot": "runs/run-20261124-230314-9bcbbd/failure.png"
+    "video": "runs/run-20261124-232814-a49b2b/video.webm",
+    "failure_screenshot": "runs/run-20261124-232814-a49b2b/failure.png"
   }
 }

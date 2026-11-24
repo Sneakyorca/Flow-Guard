@@ -53,13 +53,20 @@ A run, step by step:
 7. The video, `diagnostics.json` and (on failure) `failure.png` go into the private `replays` bucket; a `flow_runs` row is written with a random share token.
 8. On failure, Slack gets a message with a button to `/replay/<token>`. That page reads the run through `get_public_run(token)`, so a stranger with the link sees that one run and nothing else.
 
+### When something goes wrong
+
+- **A step can't be done** (button covered, disabled, renamed): FlowGuard takes a fresh look at the page and re-resolves that step once, excluding the element that didn't work. Steps that pass this way are marked `healed`.
+- **A run fails**: scheduled runs are re-run once before anyone is alerted. Fail-then-pass is recorded as **flaky** and not alerted; fail-then-fail is a real failure. The first attempt is kept under `attempt-1/`. (`--retries 1` does the same for the prototype.)
+- **Explaining it**: every failure is classified (site down, JavaScript error, server error, element missing, text never appeared, wrong page, element not usable) into one plain sentence with a suggested fix and the console/network evidence. That sentence leads the Slack alert and the replay page.
+- **Timeline**: a small JPEG is saved after every step (`steps/step-01.jpg`, …) alongside the video.
+
 ### Choosing a resolver
 
 Set `FLOWGUARD_RESOLVER`:
 
 | Value | Needs | Notes |
 |---|---|---|
-| `heuristic` | nothing | Default. Keyword, quoted-text and role matching. Handles click / type into / press / go to / check that "X" is visible / URL contains. |
+| `heuristic` | nothing | Default. Keyword, quoted-text and role matching with synonyms (sign up/register, log in/sign in, cart/bag/basket, checkout/place order). Handles click / type into / press / go to / check that "X" is visible / URL contains. |
 | `gemini` | `GEMINI_API_KEY` (free at aistudio.google.com) | `gemini-2.5-flash` in JSON mode. Picked automatically when the key is set and `FLOWGUARD_RESOLVER` is empty. |
 | `groq` | `GROQ_API_KEY` (free at console.groq.com) | `llama-3.3-70b-versatile`, OpenAI-compatible JSON mode. |
 | `anthropic` | `ANTHROPIC_API_KEY` (paid) | `claude-opus-5-5`, structured output, low effort. Optional. |
@@ -137,7 +144,7 @@ Do these in order. Each one is free; none needs a credit card.
 ### 1. Supabase (database, login, video storage)
 
 1. Sign up at supabase.com and create a project (free plan). Pick the region closest to your users.
-2. Open **SQL Editor → New query**, paste the whole of `supabase/migrations/0001_init.sql`, and click **Run**. This creates the tables, row-level security, the trigger that gives every new user a workspace, the `get_public_run` function and the private `replays` bucket.
+2. Open **SQL Editor → New query**, paste the whole of `supabase/migrations/0001_init.sql`, and click **Run**. Then do the same with `0002_step_timeline_and_flaky.sql`. Together these create the tables, row-level security, the trigger that gives every new user a workspace, the `get_public_run` function and the private `replays` bucket.
 3. Open **Project Settings → API** and note the **Project URL**, the **anon public** key and the **service_role** key. The service role key bypasses security: only ever put it in GitHub secrets, Vercel server env and your local `.env`, never in browser code.
 4. Copy `.env.example` to `.env` in the repo root and fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 
@@ -194,5 +201,7 @@ This is the first milestone. See the bottom of `docs/PLAN.md` for scope. What wo
 - the scanner crawls 15 pages of books.toscrape.com in about 16 seconds;
 - the migration applies cleanly and row-level security keeps workspaces apart;
 - the web app builds and renders every route with no environment variables.
+
+Research behind the product and design decisions: `docs/research/product.md` and `docs/research/design.md` (with before/after screenshots of every page).
 
 Not built yet: sign-in screens, live data on the dashboard, real scans from the website form, email alerts.
