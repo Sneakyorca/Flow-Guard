@@ -4,8 +4,16 @@ import { VIEWPORTS, type Viewport } from "@flowguard/shared";
 const MOBILE_UA =
   "Mozilla/5.0 (iPhone; CPU iPhone OS 17_0 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.0 Mobile/15E148 Safari/604.1";
 
+/** Honour HTTPS_PROXY for both the browser and Playwright's API request context (link checks). */
+function proxyFromEnv() {
+  const server = process.env.HTTPS_PROXY || process.env.https_proxy;
+  if (!server) return undefined;
+  const bypass = (process.env.NO_PROXY || process.env.no_proxy || "").split(",").map((s) => s.trim()).filter(Boolean).join(",");
+  return { server, ...(bypass ? { bypass } : {}) };
+}
+
 export async function launchBrowser(): Promise<Browser> {
-  return chromium.launch({ headless: process.env.HEADFUL !== "1" });
+  return chromium.launch({ headless: process.env.HEADFUL !== "1", proxy: proxyFromEnv() });
 }
 
 /**

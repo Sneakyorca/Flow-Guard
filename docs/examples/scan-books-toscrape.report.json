@@ -1,0 +1,167 @@
+{
+  "scan_id": "scan-20261124-230506-87fa31",
+  "url": "https://books.toscrape.com/",
+  "started_at": "2026-11-24T23:05:06.489Z",
+  "duration_ms": 15873,
+  "budget_ms": 60000,
+  "pages_scanned": [
+    {
+      "url": "https://books.toscrape.com/",
+      "status": 200,
+      "load_ms": 490
+    },
+    {
+      "url": "https://books.toscrape.com/index.html",
+      "status": 200,
+      "load_ms": 129
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+      "status": 200,
+      "load_ms": 129
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
+      "status": 200,
+      "load_ms": 510
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html",
+      "status": 200,
+      "load_ms": 630
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html",
+      "status": 200,
+      "load_ms": 616
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html",
+      "status": 200,
+      "load_ms": 483
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/classics_6/index.html",
+      "status": 200,
+      "load_ms": 485
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
+      "status": 200,
+      "load_ms": 652
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
+      "status": 200,
+      "load_ms": 514
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html",
+      "status": 200,
+      "load_ms": 508
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
+      "status": 200,
+      "load_ms": 672
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+      "status": 200,
+      "load_ms": 611
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/religion_12/index.html",
+      "status": 200,
+      "load_ms": 464
+    },
+    {
+      "url": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
+      "status": 200,
+      "load_ms": 634
+    }
+  ],
+  "links_checked": 135,
+  "broken_links": [],
+  "mobile_overflow": [],
+  "console_errors": [
+    {
+      "page": "https://books.toscrape.com/",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books_1/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books_1/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/travel_2/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/travel_2/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/mystery_3/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/mystery_3/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/historical-fiction_4/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/sequential-art_5/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/classics_6/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/classics_6/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/philosophy_7/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/romance_8/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/romance_8/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/womens-fiction_9/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/fiction_10/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/fiction_10/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/childrens_11/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/childrens_11/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/religion_12/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/religion_12/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    },
+    {
+      "page": "https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html",
+      "type": "console.error",
+      "text": "Mixed Content: The page at 'https://books.toscrape.com/catalogue/category/books/nonfiction_13/index.html' was loaded over HTTPS, but requested an insecure script 'http://ajax.googleapis.com/ajax/libs/jquery/1.9.1/jquery.min.js'. This request has been blocked; the content must be served over HTTPS."
+    }
+  ],
+  "score": 70,
+  "summary": "15 pages scanned · no broken links · no mobile overflow · 15 uncaught JS errors",
+  "video": "runs/scan-20261124-230506-87fa31/video.webm"
+}
