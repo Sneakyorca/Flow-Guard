@@ -216,6 +216,10 @@ export const ScanConsoleError = z.object({
   page: z.string(),
   type: z.string(),
   text: z.string(),
+  /** Same error seen on this many pages (de-duplicated). */
+  count: z.number().default(1),
+  /** Up to 5 other pages it also appeared on. */
+  also_on: z.array(z.string()).default([]),
 });
 export type ScanConsoleError = z.infer<typeof ScanConsoleError>;
 

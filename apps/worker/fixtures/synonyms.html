@@ -1,0 +1,12 @@
+<!doctype html>
+<html><body>
+  <nav><a href="#login" onclick="out('login')">Sign in</a> <a href="#bag" onclick="out('bag')">Bag (2)</a></nav>
+  <h1>Welcome to Kemi</h1>
+  <form onsubmit="event.preventDefault(); out('registered ' + document.querySelector('#em').value)">
+    <label for="em">E-mail address</label> <input id="em" type="email">
+    <button>Create account</button>
+  </form>
+  <button onclick="out('paid')">Place order</button>
+  <p id="out"></p>
+  <script>function out(t){ document.getElementById('out').textContent = t; }</script>
+</body></html>

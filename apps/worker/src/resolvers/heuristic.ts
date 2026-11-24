@@ -24,12 +24,54 @@ const ROLE_HINTS: Array<[RegExp, string[]]> = [
   [/\b(heading|title)\b/, ["heading"]],
 ];
 
+/**
+ * Words people use interchangeably for the same control. Phrases are folded into one
+ * canonical token first, then single words, so "Sign up", "Register" and "Create account"
+ * all become "signup" on both sides of the comparison.
+ */
+const PHRASES: Array<[RegExp, string]> = [
+  [/\b(sign|signing) up\b|\bcreate (an |your )?account\b|\bget started\b/g, "signup"],
+  [/\b(log|sign|logging|signing) in(to)?\b/g, "login"],
+  [/\b(log|sign|logging|signing) out\b/g, "logout"],
+  [/\bcheck out\b|\bplace (my |the )?order\b|\bproceed to (checkout|payment)\b|\bbuy now\b|\bpay now\b/g, "checkout"],
+  [/\badd to (cart|bag|basket)\b/g, "addtocart"],
+  [/\be-?mail address\b/g, "email"],
+  [/\bphone number\b|\bmobile number\b/g, "phone"],
+  [/\bfull name\b/g, "name"],
+];
+const WORDS: Record<string, string> = {
+  register: "signup", join: "signup", enroll: "signup", signup: "signup",
+  signin: "login", login: "login", logon: "login",
+  signout: "logout", logout: "logout",
+  bag: "cart", basket: "cart", trolley: "cart", cart: "cart",
+  pay: "checkout", purchase: "checkout", checkout: "checkout",
+  find: "search", lookup: "search",
+  mail: "email", "e-mail": "email",
+  passcode: "password", pwd: "password",
+  send: "submit", continue: "submit", proceed: "submit", next: "submit", go: "submit",
+  dismiss: "close", hamburger: "menu", telephone: "phone", mobile: "phone",
+  newsletter: "subscribe", qty: "quantity",
+};
+
+function stem(t: string): string {
+  if (t.length > 5 && t.endsWith("ing")) return t.slice(0, -3);
+  if (t.length > 4 && t.endsWith("ed")) return t.slice(0, -2);
+  if (t.length > 3 && t.endsWith("s") && !t.endsWith("ss")) return t.slice(0, -1);
+  return t;
+}
+
+export function canonical(s: string): string {
+  let out = s.toLowerCase();
+  for (const [re, rep] of PHRASES) out = out.replace(re, ` ${rep} `);
+  return out;
+}
+
 export function tokenize(s: string): string[] {
-  return s
-    .toLowerCase()
+  return canonical(s)
     .replace(/[^a-z0-9@._\s-]/g, " ")
     .split(/[\s_-]+/)
-    .filter((t) => t.length > 1 && !STOP.has(t));
+    .filter((t) => t.length > 1 && !STOP.has(t))
+    .map((t) => WORDS[t] ?? WORDS[stem(t)] ?? stem(t));
 }
 
 function quoted(s: string): string[] {

@@ -28,7 +28,7 @@ async function main() {
   console.log(`Score ${r.score}/100 — ${r.summary} (${(r.duration_ms / 1000).toFixed(1)}s)`);
   for (const b of r.broken_links.slice(0, 10)) console.log(`  broken  ${b.status ?? "ERR"} ${b.url}  (on ${b.found_on})`);
   for (const o of r.mobile_overflow.slice(0, 5)) console.log(`  overflow ${o.scroll_width}px > ${o.viewport_width}px on ${o.page}: ${o.offenders.join(", ")}`);
-  for (const c of r.console_errors.slice(0, 5)) console.log(`  js      ${c.type} on ${c.page}: ${c.text.slice(0, 140)}`);
+  for (const c of r.console_errors.slice(0, 5)) console.log(`  js      ${c.type}${c.count > 1 ? ` ×${c.count} pages` : ""} (first on ${c.page}): ${c.text.slice(0, 140)}`);
   console.log(`  report: ${path.join(outDir, "report.json")}`);
   if (r.video) console.log(`  video:  ${r.video}`);
 }

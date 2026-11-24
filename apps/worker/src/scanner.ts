@@ -16,6 +16,8 @@ export interface ScanOptions {
   log?: (msg: string) => void;
 }
 
+type RawConsoleError = Pick<ScanConsoleError, "page" | "type" | "text">;
+
 const SKIP_EXT = /\.(pdf|zip|png|jpe?g|gif|webp|svg|mp4|webm|mp3|dmg|exe|docx?|xlsx?|pptx?)(\?|$)/i;
 
 function normalize(href: string, base: string): string | null {
@@ -49,7 +51,7 @@ export async function scanSite(opts: ScanOptions): Promise<ScanReport> {
   const videoTmp = path.join(opts.outDir, ".video-tmp");
 
   const pages: ScanReport["pages_scanned"] = [];
-  const consoleErrors: ScanConsoleError[] = [];
+  const consoleErrors: RawConsoleError[] = [];
   const overflow: OverflowIssue[] = [];
   const broken: BrokenLink[] = [];
   const linkSources = new Map<string, string>(); // url -> first page it was found on
@@ -125,15 +127,28 @@ export async function scanSite(opts: ScanOptions): Promise<ScanReport> {
     await rm(videoTmp, { recursive: true, force: true }).catch(() => {});
   }
 
+  // The same error on every page (a broken shared script) is one problem, not fifteen.
+  const grouped = new Map<string, ScanConsoleError>();
+  for (const e of consoleErrors) {
+    const key = `${e.type}|${e.text.split(e.page).join("<page>").replace(/https?:\/\/\S+?(?=['" )]|$)/g, (u) => (u.startsWith(origin) ? "<same-site>" : u))}`;
+    const g = grouped.get(key);
+    if (!g) grouped.set(key, { ...e, count: 1, also_on: [] });
+    else {
+      g.count++;
+      if (g.also_on.length < 5 && e.page !== g.page && !g.also_on.includes(e.page)) g.also_on.push(e.page);
+    }
+  }
+  const uniqueErrors = [...grouped.values()];
+
   const score = Math.max(
     0,
-    100 - Math.min(40, broken.length * 10) - Math.min(30, overflow.length * 10) - Math.min(30, consoleErrors.length * 5),
+    100 - Math.min(40, broken.length * 10) - Math.min(30, overflow.length * 10) - Math.min(30, uniqueErrors.length * 10),
   );
   const parts = [
     `${pages.length} page${pages.length === 1 ? "" : "s"} scanned`,
     broken.length ? `${broken.length} broken link${broken.length === 1 ? "" : "s"}` : "no broken links",
     overflow.length ? `${overflow.length} page${overflow.length === 1 ? "" : "s"} overflow on mobile` : "no mobile overflow",
-    consoleErrors.length ? `${consoleErrors.length} uncaught JS error${consoleErrors.length === 1 ? "" : "s"}` : "no JS errors",
+    uniqueErrors.length ? `${uniqueErrors.length} distinct JS error${uniqueErrors.length === 1 ? "" : "s"}${consoleErrors.length > uniqueErrors.length ? ` (${consoleErrors.length} occurrences)` : ""}` : "no JS errors",
   ];
   const report = ScanReport.parse({
     scan_id: opts.scanId,
@@ -145,7 +160,7 @@ export async function scanSite(opts: ScanOptions): Promise<ScanReport> {
     links_checked: statusByUrl.size,
     broken_links: broken,
     mobile_overflow: overflow,
-    console_errors: consoleErrors,
+    console_errors: uniqueErrors,
     score,
     summary: parts.join(" · "),
     video: videoPath,
@@ -167,7 +182,7 @@ async function slowScroll(page: Page, ms: number) {
   }
 }
 
-async function visit(ctx: BrowserContext, url: string, timeout: number, consoleErrors: ScanConsoleError[]) {
+async function visit(ctx: BrowserContext, url: string, timeout: number, consoleErrors: RawConsoleError[]) {
   const page = await ctx.newPage();
   const t0 = Date.now();
   const onConsole = (msg: import("playwright").ConsoleMessage) => {
