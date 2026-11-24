@@ -10,6 +10,9 @@ interface PublicRun {
   duration_ms: number | null;
   failed_step_index: number | null;
   error_message: string | null;
+  explanation?: { title: string; detail: string; suggestion: string; evidence: string[] } | null;
+  flaky?: boolean;
+  attempts?: number;
   video_path: string | null;
   console_logs: ConsoleLog[];
   network_errors: NetworkError[];
@@ -50,10 +53,10 @@ export async function getReplay(token: string): Promise<ReplayData | null> {
     flowName: run.flow.name,
     domain: host,
     detectedAt: `${run.status === "FAILED" ? "Failed" : "Passed"} ${new Date(run.started_at).toUTCString().replace(" GMT", " UTC")}`,
-    summaryTitle: run.status === "FAILED" ? `Stopped at step ${failed !== null ? failed + 1 : 1}` : "Every step passed",
+    summaryTitle: run.status === "FAILED" ? run.explanation?.title ?? `Stopped at step ${failed !== null ? failed + 1 : 1}` : run.flaky ? "Passed on retry (flaky)" : "Every step passed",
     summaryBody:
       run.status === "FAILED"
-        ? `${passedCount} of ${run.steps.length} steps passed. ${run.error_message ?? ""}`
+        ? `${passedCount} of ${run.steps.length} steps passed. ${run.explanation?.detail ?? run.error_message ?? ""}`
         : `${run.steps.length} steps completed in ${((run.duration_ms ?? 0) / 1000).toFixed(1)}s.`,
     steps: run.steps.map((s) => ({ instruction: s.instruction, status: s.status, duration: `${(s.duration_ms / 1000).toFixed(1)}s`, error: s.error })),
     consoleErrors: run.console_logs.map((c) => {
@@ -75,7 +78,7 @@ export async function getReplay(token: string): Promise<ReplayData | null> {
       ["Runner", "GitHub Actions (free tier)"],
       ["Total duration", `${((run.duration_ms ?? 0) / 1000).toFixed(1)} seconds`],
     ],
-    rootCause: run.error_message ?? "No errors recorded.",
+    rootCause: run.explanation ? [run.explanation.suggestion, ...run.explanation.evidence].join(" ") : run.error_message ?? "No errors recorded.",
     videoUrl,
     durationSeconds: Math.round((run.duration_ms ?? 0) / 1000),
   };

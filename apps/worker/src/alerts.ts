@@ -9,12 +9,12 @@ export async function sendSlackAlert(webhookUrl: string, flow: Pick<FlowRow, "na
     d.network_errors.length ? `${d.network_errors.length} failed requests` : null,
   ].filter(Boolean).join(" · ");
 
-  const text = `FlowGuard: "${flow.name}" failed — ${stepLine}`;
+  const text = `FlowGuard: "${flow.name}" failed — ${d.explanation?.title ?? stepLine}`;
   const body = {
     text,
     blocks: [
       { type: "section", text: { type: "mrkdwn", text: `*${escape(flow.name)}* failed on ${escape(new URL(flow.start_url).host)} (${flow.viewport})` } },
-      { type: "section", text: { type: "mrkdwn", text: `*${escape(stepLine)}*\n\`${escape((d.error_message ?? "").slice(0, 400))}\`${extras ? `\n${extras}` : ""}` } },
+      { type: "section", text: { type: "mrkdwn", text: `*${escape(d.explanation?.title ?? stepLine)}*\n${escape(d.explanation ? `${d.explanation.detail} ${d.explanation.suggestion}` : "")}\n${escape(stepLine)}\n\`${escape((d.error_message ?? "").slice(0, 300))}\`${extras ? `\n${extras}` : ""}` } },
       { type: "actions", elements: [{ type: "button", text: { type: "plain_text", text: "Watch the replay" }, url: replayUrl }] },
     ],
   };

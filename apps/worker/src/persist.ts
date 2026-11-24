@@ -93,6 +93,7 @@ export async function executeAndPersist(db: SupabaseClient, flow: FlowWithWorksp
       console_logs_json: diagnostics.console_logs,
       network_errors_json: diagnostics.network_errors,
       steps_result_json: diagnostics.steps,
+      explanation: diagnostics.explanation,
     })
     .select("public_share_token")
     .single();

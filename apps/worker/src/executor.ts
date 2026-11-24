@@ -12,6 +12,7 @@ import {
 } from "@flowguard/shared";
 import { launchBrowser, newContext } from "./browser.js";
 import { takeSnapshot } from "./snapshot.js";
+import { explainFailure } from "./explain.js";
 import type { Resolver } from "./resolvers/index.js";
 
 export interface RunOptions {
@@ -78,8 +79,12 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
     // Step 0: open the start URL (not counted as a user step).
     try {
       log(`→ open ${startUrl}`);
-      await page.goto(startUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
+      const res = await page.goto(startUrl, { waitUntil: "domcontentloaded", timeout: 30_000 });
       await settle(page);
+      if (res && res.status() >= 400) {
+        failedIndex = 0;
+        errorMessage = `Start page returned ${res.status()} ${res.statusText()} for ${startUrl}`;
+      }
     } catch (err) {
       failedIndex = 0;
       errorMessage = `Could not load start URL ${startUrl}: ${errMsg(err)}`;
@@ -92,14 +97,15 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
         continue;
       }
       const s0 = Date.now();
+      const startedMs = s0 - started;
       const attempt = await attemptStep(page, resolver, instruction, timeout, log, i);
       if (!attempt.error) {
-        results.push({ index: i, instruction, status: "passed", duration_ms: Date.now() - s0, actions: attempt.actions, reasoning: attempt.reasoning, attempts: attempt.attempts, healed: attempt.attempts > 1 });
+        results.push({ index: i, instruction, status: "passed", duration_ms: Date.now() - s0, actions: attempt.actions, reasoning: attempt.reasoning, attempts: attempt.attempts, healed: attempt.attempts > 1, started_ms: startedMs });
         log(`✓ step ${i + 1}: ${instruction} (${Date.now() - s0}ms)${attempt.attempts > 1 ? " [healed on retry]" : ""}`);
       } else {
         failedIndex = i;
         errorMessage = `Step ${i + 1} ("${instruction}") failed: ${attempt.error}`;
-        results.push({ index: i, instruction, status: "failed", duration_ms: Date.now() - s0, actions: attempt.actions, reasoning: attempt.reasoning, error: attempt.error, attempts: attempt.attempts, healed: false });
+        results.push({ index: i, instruction, status: "failed", duration_ms: Date.now() - s0, actions: attempt.actions, reasoning: attempt.reasoning, error: attempt.error, attempts: attempt.attempts, healed: false, started_ms: startedMs });
         log(`✗ step ${i + 1}: ${attempt.error}`);
       }
       // Timeline: a small JPEG of the page right after each step (passed or failed).
@@ -125,7 +131,7 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
     await rm(videoTmp, { recursive: true, force: true }).catch(() => {});
   }
 
-  const diagnostics = RunDiagnostics.parse({
+  const base = {
     run_id: runId,
     status: failedIndex === null ? "PASSING" : "FAILED",
     start_url: startUrl,
@@ -140,7 +146,8 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
     console_logs: consoleLogs,
     network_errors: networkErrors,
     artifacts: { video: videoPath, failure_screenshot: screenshot },
-  });
+  };
+  const diagnostics = RunDiagnostics.parse({ ...base, explanation: explainFailure(RunDiagnostics.parse(base)) });
   await writeFile(path.join(outDir, "diagnostics.json"), JSON.stringify(diagnostics, null, 2));
   return diagnostics;
 }

@@ -130,10 +130,22 @@ export const StepResult = z.object({
   attempts: z.number().default(1),
   /** True when the first attempt failed and the re-resolved attempt passed. */
   healed: z.boolean().default(false),
+  /** Offset from run start when this step began (ms); used to line up console/network logs. */
+  started_ms: z.number().optional(),
   /** Path (relative to the run folder) of a JPEG taken right after this step. */
   screenshot: z.string().optional(),
 });
 export type StepResult = z.infer<typeof StepResult>;
+
+export const FailureExplanation = z.object({
+  category: z.enum(["site_down", "js_error", "server_error", "element_missing", "text_missing", "wrong_page", "not_interactable", "other"]),
+  /** One short sentence, written for a non-developer. */
+  title: z.string(),
+  detail: z.string(),
+  suggestion: z.string(),
+  evidence: z.array(z.string()),
+});
+export type FailureExplanation = z.infer<typeof FailureExplanation>;
 
 export const RunDiagnostics = z.object({
   run_id: z.string(),
@@ -146,6 +158,7 @@ export const RunDiagnostics = z.object({
   duration_ms: z.number(),
   failed_step_index: z.number().nullable(),
   error_message: z.string().nullable(),
+  explanation: FailureExplanation.nullable().default(null),
   steps: z.array(StepResult),
   console_logs: z.array(ConsoleLog),
   network_errors: z.array(NetworkError),

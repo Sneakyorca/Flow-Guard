@@ -45,6 +45,11 @@ async function main() {
   console.log(`${d.status === "PASSING" ? "PASSING" : "FAILED"} in ${(d.duration_ms / 1000).toFixed(1)}s`);
   for (const s of d.steps) console.log(`  ${s.status.padEnd(7)} ${String(s.duration_ms).padStart(5)}ms  ${s.index + 1}. ${s.instruction}`);
   if (d.error_message) console.log(`  error: ${d.error_message}`);
+  if (d.explanation) {
+    console.log(`  why:   ${d.explanation.title}. ${d.explanation.detail}`);
+    console.log(`  fix:   ${d.explanation.suggestion}`);
+    for (const e of d.explanation.evidence) console.log(`         · ${e}`);
+  }
   console.log(`  console errors: ${d.console_logs.length} · network errors: ${d.network_errors.length}`);
   console.log(`  diagnostics: ${path.join(outDir, "diagnostics.json")}`);
   if (d.artifacts.video) console.log(`  video:       ${d.artifacts.video}`);
