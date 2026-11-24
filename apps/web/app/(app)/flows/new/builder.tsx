@@ -9,6 +9,11 @@ import { useToast } from "@/components/toast";
 import { addFlow } from "@/components/flows-store";
 
 const SCHEDULES: Array<[string, string]> = [["Every 1 hour", "0 * * * *"], ["Every 6 hours", "0 */6 * * *"], ["Daily", "0 6 * * *"]];
+const ALERTS = [
+  { id: "slack", label: "Post to Slack", hint: "One message per confirmed failure", on: false },
+  { id: "email", label: "Email me", hint: "To the workspace owner", on: true },
+  { id: "share", label: "Make the replay link public", hint: "Anyone with the link can watch it", on: true },
+];
 
 export function Builder() {
   const router = useRouter();
@@ -20,6 +25,8 @@ export function Builder() {
   const [steps, setSteps] = useState(demoBuilderSteps);
   const [tested, setTested] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  const edit = (fn: (s: string[]) => string[]) => { setSteps(fn); setTested(false); };
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -39,82 +46,89 @@ export function Builder() {
           steps_json: steps.filter((s) => s.trim()).map((instruction) => ({ instruction })),
         });
         setSaving(false);
-        if (error) return notify(`Could not save flow: ${error.message}`);
-        notify("Flow saved. The next scheduled run will pick it up.");
+        if (error) return notify(`Couldn’t save the flow: ${error.message}`);
+        notify("Saved. It will run at the next scheduled tick.");
         return router.push("/monitors");
       }
       setSaving(false);
     }
-    addFlow({ id: `f-${Date.now()}`, name: flowName, domain, status: "passing", time: tested ? "Just now" : "Not run", detail: `${steps.length} configured steps`, duration: 4.2, schedule });
-    notify("Flow created in this demo session. Scheduled monitoring is not active.");
+    addFlow({ id: `f-${Date.now()}`, name: flowName, domain, status: "passing", time: tested ? "just now" : "not run yet", detail: `${steps.length} steps`, duration: 4.2, schedule });
+    notify("Added to this sample workspace. Connect Supabase to schedule real runs.");
     router.push("/monitors");
   }
 
   return (
     <>
-      <div className="page-heading">
+      <div className="page-head">
         <div>
-          <Link className="back-link" href="/monitors">← Back to monitors</Link>
-          <h1>Create critical flow</h1>
-          <p>If you can describe it, FlowGuard can test it. No scripts required.</p>
+          <Link className="back" href="/monitors"><Icon name="back" size={14} /> Monitors</Link>
+          <h1>New flow</h1>
+          <p>Write the journey the way you’d explain it to a new teammate, one action per step. FlowGuard opens the page and works out which button or field you mean.</p>
         </div>
-        <span className="pill">PLAIN ENGLISH. REAL CONFIDENCE.</span>
       </div>
-      <form onSubmit={onSubmit}>
-        <div className="grid grid-cols-1 lg:grid-cols-[0.85fr_1.3fr] gap-6">
-          <section className="config-card">
-            <h2><Icon name="settings" /> Configuration</h2>
-            <label className="field">Flow name<input required value={flowName} onChange={(e) => setFlowName(e.target.value)} placeholder="e.g. Signup & onboarding" /></label>
-            <label className="field">Starting URL<input required type="url" className="mono" value={url} onChange={(e) => setUrl(e.target.value)} /></label>
-            <div className="field">
-              Device viewport
-              <div className="device-toggle">
-                {["Desktop", "Mobile"].map((d) => (
-                  <button type="button" aria-pressed={device === d} className={device === d ? "selected" : ""} key={d} onClick={() => setDevice(d)}>
-                    <Icon name={d === "Desktop" ? "monitor" : "mobile"} /><b>{d}</b><small>{d === "Desktop" ? "1440px" : "iPhone 15"}</small>
+      <form onSubmit={onSubmit} className="builder">
+        <section className="panel" aria-labelledby="cfg">
+          <div className="panel-head"><h2 id="cfg">Where and when</h2></div>
+          <div className="form-sec">
+            <label className="field">Name<input required value={flowName} onChange={(e) => setFlowName(e.target.value)} placeholder="Guest checkout" /></label>
+            <label className="field">Start page<span className="hint">The first URL the browser opens.</span><input required type="url" className="mono" value={url} onChange={(e) => setUrl(e.target.value)} /></label>
+            <div className="field" role="group" aria-label="Screen size">
+              Screen size
+              <div className="choice">
+                {[["Desktop", "monitor", "1440 × 900"], ["Mobile", "mobile", "390 × 844, like an iPhone 15"]].map(([d, icon, sub]) => (
+                  <button type="button" key={d} aria-pressed={device === d} onClick={() => setDevice(d)}>
+                    <Icon name={icon} size={18} /><span><b>{d}</b><small>{sub}</small></span>
                   </button>
                 ))}
               </div>
             </div>
-            <label className="field">Run schedule
+            <label className="field">How often
               <select value={schedule} onChange={(e) => setSchedule(e.target.value)}>
                 {SCHEDULES.map(([label]) => <option key={label}>{label}</option>)}
               </select>
             </label>
-            <div className="field">
-              Alert preferences
-              {["Slack webhook", "Email notifications", "Shareable replay link"].map((a, i) => (
-                <label className="check-label" key={a}><input type="checkbox" defaultChecked={i > 0} />{a}</label>
+            <fieldset className="field">
+              <legend>When it fails</legend>
+              {ALERTS.map((a) => (
+                <label className="check" key={a.id}><input type="checkbox" defaultChecked={a.on} /><span>{a.label} <span className="muted">· {a.hint}</span></span></label>
               ))}
-            </div>
-            <div className="info-box"><Icon name="shield" /><p>Demo configuration only. Real browser runs, schedules, and notifications require a connected backend.</p></div>
-          </section>
-          <section className="config-card steps-config">
-            <h2><Icon name="code" /> Plain-English steps<span className="pill">{steps.length} STEPS</span></h2>
-            <p className="muted mb-6">Describe what a user should do, one action at a time.</p>
-            <div className="space-y-4">
+            </fieldset>
+            <p className="muted" style={{ fontSize: 12.5, paddingBottom: 12 }}>A failed run is re-run once before anyone is alerted, so a single network blip won’t wake you up.</p>
+          </div>
+        </section>
+
+        <section className="panel" aria-labelledby="steps-h">
+          <div className="panel-head"><h2 id="steps-h">Steps</h2><span className="meta num">{steps.length} step{steps.length === 1 ? "" : "s"}</span></div>
+          <div className="form-sec" style={{ paddingTop: 4 }}>
+            <ol className="steps">
               {steps.map((s, i) => (
-                <div className="step-editor" key={i}>
-                  <div>
-                    <span>{String(i + 1).padStart(2, "0")}</span><b>Step {i + 1}</b>
-                    <button type="button" aria-label={`Remove step ${i + 1}`} disabled={steps.length === 1} onClick={() => { setSteps((ss) => ss.filter((_, n) => n !== i)); setTested(false); }}>
-                      <Icon name="x" size={16} />
-                    </button>
-                  </div>
-                  <textarea required aria-label={`Instruction for step ${i + 1}`} value={s} onChange={(e) => { setSteps((ss) => ss.map((v, n) => (n === i ? e.target.value : v))); setTested(false); }} />
-                </div>
+                <li key={i}>
+                  <textarea required rows={1} aria-label={`Step ${i + 1}`} value={s} placeholder="Click “Add to cart”" onChange={(e) => edit((ss) => ss.map((v, n) => (n === i ? e.target.value : v)))} />
+                  <button type="button" className="rm" aria-label={`Remove step ${i + 1}`} disabled={steps.length === 1} onClick={() => edit((ss) => ss.filter((_, n) => n !== i))}>
+                    <Icon name="x" size={15} />
+                  </button>
+                </li>
               ))}
+            </ol>
+            <Button variant="ghost" onClick={() => edit((ss) => [...ss, ""])}><Icon name="plus" /> Add a step</Button>
+            <div className="guide">
+              <b>Phrasing that works well</b>
+              <ul>
+                <li><code>Click “Sign up”</code> or <code>Click the Active filter</code></li>
+                <li><code>Type “ada@example.com” into the email field</code>, add <code>and press Enter</code> to submit</li>
+                <li><code>Go to /pricing</code> or a full URL</li>
+                <li><code>Check that “Order confirmed” is visible</code>, <code>Check the URL contains /thank-you</code></li>
+              </ul>
             </div>
-            <button type="button" className="add-step" onClick={() => { setSteps((ss) => [...ss, ""]); setTested(false); }}><Icon name="plus" /> Add step</button>
-            <div className="builder-actions">
-              <Button onClick={() => { setTested(true); notify(`Demo test: ${steps.length} steps validated for ${device.toLowerCase()}. No website was accessed.`); }}>
-                <Icon name="play" size={16} /> {tested ? "Test again" : "Test Run Flow"}
-              </Button>
-              <Button primary type="submit" disabled={saving}><Icon name="plus" size={16} /> {saving ? "Saving…" : "Create flow"}</Button>
-            </div>
-            {tested && <p className="text-green mt-4">✓ Sample test completed. Ready to create your demo flow.</p>}
-          </section>
-        </div>
+          </div>
+          <div className="actions">
+            {tested && <span className="msg" role="status"><Icon name="check-circle" size={14} /> Steps look runnable (sample check, no site visited)</span>}
+            <Button onClick={() => { setTested(true); notify(`Checked ${steps.length} steps for a ${device.toLowerCase()} browser. Sample mode: no site was visited.`); }}>
+              <Icon name="play" size={14} /> {tested ? "Test again" : "Test run"}
+            </Button>
+            <Button variant="primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Create flow"}</Button>
+          </div>
+        </section>
       </form>
     </>
   );

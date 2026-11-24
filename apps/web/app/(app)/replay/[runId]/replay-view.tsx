@@ -1,14 +1,14 @@
 "use client";
 import Link from "next/link";
-import { useState } from "react";
+import { Fragment, useState } from "react";
 import type { ReplayData } from "@/lib/demo-data";
-import { Badge, Button, Icon } from "@/components/ui";
+import { Button, Icon, StatusLabel, StepIcon } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { ReplayPlayer } from "@/components/replay-player";
 
 export function ReplayView({ data, shareId }: { data: ReplayData; shareId: string }) {
   const notify = useToast();
-  const [inspector, setInspector] = useState("console");
+  const [tab, setTab] = useState<"console" | "network" | "dom">("console");
   const [rerunning, setRerunning] = useState(false);
   const passed = data.steps.filter((s) => s.status === "passed").length;
   const failed = data.status === "FAILED";
@@ -17,100 +17,101 @@ export function ReplayView({ data, shareId }: { data: ReplayData; shareId: strin
     const link = `${window.location.origin}/replay/${shareId}`;
     try {
       await navigator.clipboard.writeText(link);
-      notify(data.source === "demo" ? "Demo replay link copied. This link opens the sample replay." : "Public replay link copied.");
+      notify(data.source === "demo" ? "Link copied. It opens this sample replay." : "Link copied. Anyone with it can watch this run, nothing else.");
     } catch {
-      notify(`Clipboard unavailable. Share ${link}`);
+      notify(`Couldn’t reach the clipboard. The link is ${link}`);
     }
   };
   const rerun = () => {
     setRerunning(true);
-    window.setTimeout(() => { setRerunning(false); notify("Demo run complete. Sample result refreshed."); }, 1400);
+    window.setTimeout(() => { setRerunning(false); notify("Sample re-run finished. In demo mode no site is visited."); }, 1400);
   };
+
+  const tabs = [
+    ["console", "Console", data.consoleErrors.length],
+    ["network", "Network", data.networkErrors.length],
+    ["dom", "Page HTML", 0],
+  ] as const;
 
   return (
     <>
-      <div className="page-heading replay-heading">
+      <div className="page-head">
         <div>
-          <Link className="back-link" href="/monitors">← Back to monitors</Link>
-          <div className="flex items-center gap-3"><Badge status={failed ? "failed" : "passing"} /><span className="mono muted">{data.runLabel}</span></div>
+          <Link className="back" href="/monitors"><Icon name="back" size={14} /> Monitors</Link>
           <h1>{data.flowName}</h1>
-          <p className="mono">{data.domain} · {data.detectedAt}</p>
+          <p className="mono" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
+            <StatusLabel status={failed ? "failed" : "passing"} />
+            <span>{data.domain}</span><span>{data.runLabel.toLowerCase()}</span><span>{data.detectedAt}</span>
+          </p>
         </div>
-        <div className="flex flex-wrap gap-3">
-          <Button onClick={rerun}><Icon name="refresh" size={16} />{rerunning ? "Re-running…" : "Re-run Flow"}</Button>
-          <Button primary onClick={copy}><Icon name="link" size={16} /> Copy Public Share Link</Button>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
+          <Button onClick={rerun} disabled={rerunning}><Icon name="refresh" size={14} />{rerunning ? "Running…" : "Run again"}</Button>
+          <Button variant="primary" onClick={copy}><Icon name="link" size={14} /> Copy share link</Button>
         </div>
       </div>
 
-      <div className="failure-summary">
-        <span className="incident-icon">{failed ? "!" : "✓"}</span>
-        <div><b>{data.summaryTitle}</b><p>{data.summaryBody}</p></div>
-        {failed && <span className="pill">CRITICAL</span>}
-      </div>
+      <section className={`why ${failed ? "" : "ok"}`} aria-label="Summary">
+        <Icon name={failed ? "x-circle" : "check-circle"} size={20} />
+        <div>
+          <h2>{data.summaryTitle}</h2>
+          <p>{data.summaryBody}</p>
+          {data.suggestion && <p className="fix"><b>What to check:</b> {data.suggestion}</p>}
+          {data.evidence.length > 0 && <ul>{data.evidence.map((e) => <li key={e}>{e}</li>)}</ul>}
+        </div>
+      </section>
 
-      <div className="grid grid-cols-1 xl:grid-cols-[1.45fr_1fr] gap-5">
-        <div className="min-w-0">
+      <div className="replay-grid">
+        <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
           <ReplayPlayer videoUrl={data.videoUrl} />
-          <section className="execution-log">
-            <div className="section-title"><h2>Execution log</h2><span className="mono">{passed} / {data.steps.length} PASSED</span></div>
-            {data.steps.map((s, i) => (
-              <div key={i} className={`log-step ${s.status === "failed" ? "error-step" : ""}`}>
-                <span className={`activity-symbol ${s.status === "failed" ? "failed" : s.status === "skipped" ? "warning" : "passing"}`}>{s.status === "failed" ? "!" : s.status === "skipped" ? "–" : "✓"}</span>
-                <div>
-                  <b><span className="muted">{i + 1}. </span>{s.instruction}</b>
-                  {s.error && <p className="mono">{s.error}</p>}
-                </div>
-                <span className="mono muted">{s.duration}</span>
-              </div>
-            ))}
+          <section className="panel" aria-labelledby="steps-h">
+            <div className="panel-head"><h2 id="steps-h">Steps</h2><span className="meta num">{passed} of {data.steps.length} passed</span></div>
+            <ol className="steplog">
+              {data.steps.map((s, i) => (
+                <li key={i} className={s.status}>
+                  <StepIcon status={s.status} />
+                  <div>
+                    <span className="faint num">{i + 1}.</span> {s.instruction}
+                    {s.error && <div className="err">{s.error}</div>}
+                  </div>
+                  <span className="dur">{s.status === "skipped" ? "skipped" : s.duration}</span>
+                </li>
+              ))}
+            </ol>
           </section>
         </div>
 
-        <section className="inspector">
-          <div className="section-title"><h2><Icon name="code" /> Technical inspector</h2><span className={`dot ${failed ? "failed" : ""}`} /></div>
-          <div className="inspector-tabs" role="tablist">
-            {([["console", "Console errors", data.consoleErrors.length], ["network", "Failed network", data.networkErrors.length], ["dom", "DOM snapshot", 0]] as const).map(([id, title, count]) => (
-              <button role="tab" aria-selected={inspector === id} key={id} className={inspector === id ? "selected" : ""} onClick={() => setInspector(id)}>
-                {title} {count > 0 && <span>{count}</span>}
+        <section className="panel" aria-label="Diagnostics">
+          <div className="tabs" role="tablist">
+            {tabs.map(([id, title, n]) => (
+              <button role="tab" key={id} id={`tab-${id}`} aria-controls="tabpanel" aria-selected={tab === id} onClick={() => setTab(id)}>
+                {title}{n > 0 && <span className="n">{n}</span>}
               </button>
             ))}
           </div>
-          <div className="inspector-body" role="tabpanel">
-            {inspector === "console" ? (
-              <>
-                {data.consoleErrors.length === 0 && <p className="muted">No console errors were recorded during this run.</p>}
-                {data.consoleErrors.map((c, i) => (
-                  <div key={i} className={i ? "mt-5" : ""}>
-                    <div className="inspector-label"><span className="text-red">⊗ UNCAUGHT EXCEPTION</span><span className="mono">{c.at}</span></div>
-                    <div className="stack-trace"><b>{c.title}</b><p style={{ whiteSpace: "pre-line" }}>{c.message}</p>{c.stack && <pre>{c.stack}</pre>}</div>
-                  </div>
-                ))}
-                {data.networkErrors.slice(0, 1).map((n, i) => (
-                  <div key={`n${i}`}>
-                    <div className="inspector-label mt-7"><span className="text-red">⊗ NETWORK ERROR</span><span className="mono">{n.at}</span></div>
-                    <div className="network-error"><span className="mono">{n.method} <b>{n.path}</b></span>{n.status && <span className="badge failed">{n.status}</span>}<p>{n.statusText}</p></div>
-                  </div>
-                ))}
-              </>
-            ) : inspector === "network" ? (
-              <>
-                {data.networkErrors.length === 0 && <p className="muted">No failed requests (status ≥ 400) were recorded.</p>}
-                {data.networkErrors.map((n, i) => (
-                  <div key={i} className={i ? "mt-4" : ""}>
-                    <div className="network-error"><span className="mono">{n.method} {n.path}</span><p className="text-red">{n.statusText}</p></div>
-                    {n.details && <pre className="network-details">{n.details}</pre>}
-                  </div>
-                ))}
-              </>
-            ) : (
-              <pre className="network-details">{data.domSnapshot}</pre>
+          <div className="tab-body" role="tabpanel" id="tabpanel" aria-labelledby={`tab-${tab}`}>
+            {tab === "console" && (
+              data.consoleErrors.length === 0 ? <p className="muted">No console errors during this run.</p> :
+              data.consoleErrors.map((c, i) => (
+                <div className="err-block" key={i}>
+                  <header><b>{c.title}</b><span className="mono faint">at {c.at}</span></header>
+                  <pre>{c.message}{c.stack ? `\n\n${c.stack}` : ""}</pre>
+                </div>
+              ))
             )}
-            <div className="inspector-context">
-              <h3>RUN ENVIRONMENT</h3>
-              {data.environment.map(([a, b]) => <div key={a}><span>{a}</span><span className="mono">{b}</span></div>)}
-            </div>
-            <div className="info-box"><Icon name="bolt" /><p><b>Likely root cause</b><br />{data.rootCause}</p></div>
+            {tab === "network" && (
+              data.networkErrors.length === 0 ? <p className="muted">No failed requests (4xx/5xx) during this run.</p> :
+              data.networkErrors.map((n, i) => (
+                <div className="err-block" key={i}>
+                  <header><span className="mono">{n.method} {n.path}</span><b className="num">{n.status ?? "failed"}</b></header>
+                  <pre>{n.statusText} · at {n.at}{n.details ? `\n\n${n.details}` : ""}</pre>
+                </div>
+              ))
+            )}
+            {tab === "dom" && <div className="err-block"><header><span>Page HTML at the failing step</span></header><pre>{data.domSnapshot}</pre></div>}
           </div>
+          <dl className="kv">
+            {data.environment.map(([k, v]) => <Fragment key={k}><dt>{k}</dt><dd>{v}</dd></Fragment>)}
+          </dl>
         </section>
       </div>
     </>

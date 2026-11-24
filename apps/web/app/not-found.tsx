@@ -2,10 +2,11 @@ import Link from "next/link";
 
 export default function NotFound() {
   return (
-    <main className="main-content" style={{ textAlign: "center", paddingTop: 120 }}>
-      <h1>Nothing here</h1>
-      <p className="muted" style={{ marginTop: 12 }}>That replay link has expired or never existed.</p>
-      <p style={{ marginTop: 24 }}><Link className="btn" href="/">Back to FlowGuard</Link></p>
+    <main className="hero" style={{ padding: "96px 24px" }}>
+      <div className="kicker">404</div>
+      <h1>This replay link doesn’t work</h1>
+      <p>It may have been mistyped, or the run was deleted when its history expired. Ask whoever sent it for a fresh link.</p>
+      <p style={{ marginTop: 24 }}><Link className="btn primary" href="/">Go to FlowGuard</Link></p>
     </main>
   );
 }

@@ -30,12 +30,12 @@ const passingNames = [
 
 export const demoFlows: DemoFlow[] = [
   { id: "f-checkout", name: "Guest Checkout & Paystack Modal", domain: "shopkemi.com", status: "failed", time: "14m ago", detail: "Step 4 · Button “Pay Now” unresponsive", duration: 11, schedule: "Every 1 hour" },
-  { id: "f-signup", name: "New User Signup + Onboarding", domain: "app.acme.io", status: "passing", time: "8m ago", detail: "All 5 steps completed successfully", duration: 3.8, schedule: "Every 1 hour" },
-  { id: "f-demo", name: "Pricing Page → Book Demo Form", domain: "acme.io", status: "warning", time: "22m ago", detail: "Slow API response · 4,900ms", duration: 4.9, schedule: "Every 1 hour" },
+  { id: "f-signup", name: "New User Signup + Onboarding", domain: "app.ledgerly.co", status: "passing", time: "8m ago", detail: "All 5 steps completed successfully", duration: 3.8, schedule: "Every 1 hour" },
+  { id: "f-demo", name: "Pricing Page → Book Demo Form", domain: "ledgerly.co", status: "warning", time: "22m ago", detail: "Slow API response · 4,900ms", duration: 4.9, schedule: "Every 1 hour" },
   ...passingNames.map((name, i) => ({
     id: `f-${i}`,
     name,
-    domain: i % 2 ? "shopkemi.com" : "app.acme.io",
+    domain: i % 2 ? "shopkemi.com" : "app.ledgerly.co",
     status: "passing" as Status,
     time: `${i + 2}m ago`,
     detail: "All steps completed successfully",
@@ -46,8 +46,8 @@ export const demoFlows: DemoFlow[] = [
 
 export const demoActivity: Array<{ status: Status; title: string; desc: string; time: string }> = [
   { status: "failed", title: "Checkout flow failed", desc: "shopkemi.com · Step 4: Pay Now", time: "14m ago" },
-  { status: "passing", title: "Signup flow passed", desc: "app.acme.io · All 5 steps completed", time: "8m ago" },
-  { status: "warning", title: "Slow response detected", desc: "acme.io · API latency exceeded 3s", time: "22m ago" },
+  { status: "passing", title: "Signup flow passed", desc: "app.ledgerly.co · All 5 steps completed", time: "8m ago" },
+  { status: "warning", title: "Slow response detected", desc: "ledgerly.co · API latency exceeded 3s", time: "22m ago" },
 ];
 
 export const demoBuilderSteps = [
@@ -72,7 +72,10 @@ export interface ReplayData {
   networkErrors: Array<{ method: string; path: string; status: number | null; statusText: string; at: string; details?: string }>;
   domSnapshot: string;
   environment: Array<[string, string]>;
-  rootCause: string;
+  /** What to do about it (from the worker's failure explanation). */
+  suggestion: string;
+  /** Console/network lines that back the explanation. */
+  evidence: string[];
   videoUrl: string | null;
   durationSeconds: number;
 }
@@ -83,9 +86,9 @@ export const demoReplay: ReplayData = {
   status: "FAILED",
   flowName: "Guest Checkout & Paystack Modal",
   domain: "shopkemi.com",
-  detectedAt: "Detected Oct 24, 14:02 UTC · Sample incident",
-  summaryTitle: "Your checkout is blocked at payment",
-  summaryBody: "Steps 1–3 passed. “Pay Now” triggered a JavaScript error before the Paystack modal could open.",
+  detectedAt: "Failed Oct 24, 14:02 UTC · sample incident",
+  summaryTitle: "A JavaScript error broke step 4 (“Pay Now”)",
+  summaryBody: "Steps 1–3 passed. Clicking “Pay Now” threw a TypeError before the Paystack modal could open, so no customer can pay right now.",
   steps: [
     { instruction: "Navigate to shopkemi.com", status: "passed", duration: "1.2s" },
     { instruction: "Add Everyday Body Oil to cart", status: "passed", duration: "2.4s" },
@@ -118,14 +121,35 @@ export const demoReplay: ReplayData = {
   domSnapshot:
     '<main id="checkout">\n  <form id="payment-form">\n    <input type="email"\n      value="amara@example.com" />\n    <button id="pay-now"\n      type="submit">\n      Pay Now\n    </button>\n  </form>\n  <!-- Paystack modal not found -->\n</main>',
   environment: [
-    ["Browser", "Mobile Safari 17.0"],
+    ["Browser", "Chromium 147, mobile emulation"],
     ["Viewport", "390 × 844 · iPhone 15"],
-    ["Location", "London, UK"],
+    ["Runner", "GitHub Actions, us-east"],
     ["Total duration", "11.0 seconds"],
   ],
-  rootCause: "The payment SDK was unavailable when checkout initialized. Check script loading and provider configuration.",
+  suggestion: "Check that the Paystack inline script (js.paystack.co) loads on the checkout page, and look at /api/checkout in your server logs for 14:02 UTC.",
+  evidence: [
+    "JavaScript error: TypeError: Cannot read properties of undefined (reading 'initialize')",
+    "POST shopkemi.com/api/checkout returned 500",
+  ],
   videoUrl: null,
   durationSeconds: 11,
 };
 
 export const DEMO_REPLAY_ID = "482";
+
+export const demoUser = { name: "Tolu Adeyemi", email: "tolu@shopkemi.com", initials: "TA" };
+export const DEFAULT_WORKSPACE = "Kemi Skincare";
+
+/** Real output of `npm run scan -- --url https://books.toscrape.com` (docs/examples). */
+export const sampleScan = {
+  url: "https://books.toscrape.com/",
+  seconds: 18,
+  score: 90,
+  pages: 15,
+  links: 135,
+  rows: [
+    ["Broken links", "None of the 135 links checked returned an error."],
+    ["Mobile layout", "No page scrolls sideways at 390px wide."],
+    ["JavaScript", "1 error on all 15 pages: the site loads jQuery over plain http:// (ajax.googleapis.com), which browsers block on an https page. Anything that depends on that script is broken."],
+  ] as Array<[string, string]>,
+};

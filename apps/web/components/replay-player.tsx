@@ -2,78 +2,72 @@
 import { useEffect, useState } from "react";
 import { Icon } from "./ui";
 
-function Checkout({ step = 4 }: { step?: number }) {
+const SAMPLE_STEPS = ["Open the shop", "Add Everyday Body Oil to the bag", "Fill in contact details", "Click “Pay Now”"];
+const LENGTH = 11;
+
+function CheckoutMock({ step }: { step: number }) {
   return (
-    <div className="phone">
-      <div className="phone-status"><b>9:41</b><span>▥ ▰</span></div>
-      <div className="address"><Icon name="shield" size={13} /> shopkemi.com/checkout <span>↻</span></div>
-      <div className="shop-head"><b>kemi<span>.</span></b><span>✳</span></div>
-      <div className="checkout-content">
-        <span className="checkout-kicker">SECURE CHECKOUT</span>
-        <h3>{step === 1 ? "Your shopping bag" : "One last step."}</h3>
-        <p>A little something, just for you.</p>
-        <div className="product">
-          <div className="product-art">
-            <svg width="55" height="70" viewBox="0 0 55 70"><path d="M19 10h17v10l9 8v34H10V28l9-8Z" fill="#c9b08a" /><path d="M19 6h17v10H19Z" fill="#31352e" /><rect x="14" y="33" width="27" height="20" fill="#ede7db" /><text x="27" y="45" textAnchor="middle" fontSize="9" fill="#4f5144">kemi.</text></svg>
-          </div>
-          <div><b>Everyday Body Oil</b><p>100ml / Original</p><span>Qty: 1</span></div>
-          <b>₦18,500</b>
-        </div>
-        <div className="checkout-label">CONTACT INFORMATION</div>
-        <div className="fake-input">amara@example.com <span>✓</span></div>
-        <div className="checkout-label">ORDER SUMMARY</div>
-        <div className="checkout-line"><span>Subtotal</span><span>₦18,500</span></div>
-        <div className="checkout-line"><span>Delivery</span><span>₦2,000</span></div>
-        <div className="checkout-line total"><b>Total</b><b>₦20,500</b></div>
-        <div className={`pay-now ${step === 4 ? "pay-error" : ""}`}>Pay Now <span>→</span>{step === 4 && <span className="click-cursor">↖</span>}</div>
-        <div className="paystack">▰ Secured by <b>paystack</b></div>
+    <div className="phone" aria-hidden="true">
+      <div className="bar"><span>9:41</span><span>5G</span></div>
+      <div className="url">shopkemi.com/checkout</div>
+      <div className="shop">kemi<span>.</span></div>
+      <div className="body">
+        <h3>{step === 1 ? "Your bag" : "Checkout"}</h3>
+        <div className="line"><span>Everyday Body Oil, 100ml</span><span>₦18,500</span></div>
+        <div className="label">Email</div>
+        <div className="field-mock">{step >= 3 ? "amara@example.com" : " "}</div>
+        <div className="line"><span>Delivery, Lagos</span><span>₦2,000</span></div>
+        <div className="line total"><span>Total</span><span>₦20,500</span></div>
+        <div className={`pay ${step === 4 ? "err" : ""}`}>Pay Now</div>
+        <div className="small">Payments by Paystack</div>
       </div>
     </div>
   );
 }
 
-/** Sample replay (animated mock) used in demo mode and on the scanner landing. */
-export function ReplayPlayer({ videoUrl, label = "390 × 844 · Mobile Safari" }: { videoUrl?: string | null; label?: string }) {
-  const [time, setTime] = useState(11);
+/**
+ * Real recordings play in a <video>. Without one (demo mode, scanner landing) we show a
+ * labelled, scrubbable sample built from the same four steps as the sample incident.
+ */
+export function ReplayPlayer({ videoUrl, label = "390 × 844 · mobile" }: { videoUrl?: string | null; label?: string }) {
+  const [time, setTime] = useState(LENGTH);
   const [playing, setPlaying] = useState(false);
   useEffect(() => {
     if (!playing) return;
-    const id = window.setInterval(() => setTime((t) => { if (t >= 11) { setPlaying(false); return 11; } return t + 1; }), 650);
+    const id = window.setInterval(() => setTime((t) => { if (t >= LENGTH) { setPlaying(false); return LENGTH; } return t + 1; }), 650);
     return () => window.clearInterval(id);
   }, [playing]);
 
   if (videoUrl) {
     return (
-      <div className="replay-player">
-        <div className="player-top"><span><span className="dot red-dot" /> SESSION REPLAY</span><span className="mono">{label}</span></div>
-        <video className="replay-video" src={videoUrl} controls playsInline preload="metadata" />
-      </div>
+      <section className="panel player" aria-label="Recording">
+        <div className="player-bar"><span>Recording</span><span className="mono">{label}</span></div>
+        <video className="video" src={videoUrl} controls playsInline preload="metadata" />
+      </section>
     );
   }
 
   const step = Math.min(4, Math.floor(time / 3) + 1);
+  const failedNow = time >= LENGTH;
   return (
-    <div className="replay-player">
-      <div className="player-top"><span><span className="dot red-dot" /> SESSION REPLAY</span><span className="mono">{label}</span></div>
-      <div className="player-stage">
-        <div className="stage-grid" />
-        <div className="replay-note">
-          <span className="mono">STEP {step} OF 4</span>
-          <b>{time >= 9 ? "Click “Pay Now”" : time >= 6 ? "Fill checkout details" : time >= 3 ? "Add product to cart" : "Navigate to storefront"}</b>
-          <span className={time >= 11 ? "text-red" : "text-green"}>{time >= 11 ? "⚠ Click target unresponsive" : "✓ Action completed"}</span>
+    <section className="panel player" aria-label="Sample recording">
+      <div className="player-bar"><span>Sample recording</span><span className="mono">{label}</span></div>
+      <div className="stage">
+        <div className="stage-note" aria-live="polite">
+          <span className="mono">Step {step} of 4</span>
+          <b>{SAMPLE_STEPS[step - 1]}</b>
+          {failedNow ? <span className="t-bad"><Icon name="x-circle" size={14} /> Nothing happened. TypeError in checkout.js</span> : <span className="t-ok"><Icon name="check-circle" size={14} /> Done</span>}
         </div>
-        <Checkout step={step} />
-        <span className="recorded-label">Sample browser recording</span>
+        <CheckoutMock step={step} />
+        <span className="stage-caption">Illustration of a recording. Real runs show the actual video.</span>
       </div>
-      <div className="player-controls">
-        <button aria-label={playing ? "Pause replay" : "Play replay"} onClick={() => { if (time === 11) setTime(0); setPlaying(!playing); }}>
-          {playing ? "Ⅱ" : <Icon name="play" size={17} />}
+      <div className="controls">
+        <button aria-label={playing ? "Pause" : "Play"} onClick={() => { if (time === LENGTH) setTime(0); setPlaying(!playing); }}>
+          <Icon name={playing ? "pause" : "play"} />
         </button>
-        <span className="mono">00:{String(time).padStart(2, "0")} <span className="muted">/ 00:11</span></span>
-        <input aria-label="Replay timeline" type="range" min="0" max="11" value={time} onChange={(e) => { setPlaying(false); setTime(+e.target.value); }} />
-        <span className="timeline-markers"><i>✓</i><i>✓</i><i>✓</i><i>!</i></span>
-        <span className="mono">1×</span>
+        <span className="mono num">0:{String(time).padStart(2, "0")} <span className="faint">/ 0:{LENGTH}</span></span>
+        <input aria-label="Seek" type="range" min="0" max={LENGTH} value={time} onChange={(e) => { setPlaying(false); setTime(+e.target.value); }} />
       </div>
-    </div>
+    </section>
   );
 }

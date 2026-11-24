@@ -2,59 +2,73 @@ import type { ReactNode } from "react";
 import type { Status } from "@/lib/demo-data";
 
 const paths: Record<string, ReactNode> = {
-  shield: <><path d="m12 3 8 3v6c0 5-8 9-8 9s-8-4-8-9V6l8-3Z" /><path d="m8 12 3 3 5-6" /></>,
-  grid: <><rect x="3" y="3" width="7" height="7" rx="1.5" /><rect x="14" y="3" width="7" height="7" rx="1.5" /><rect x="3" y="14" width="7" height="7" rx="1.5" /><rect x="14" y="14" width="7" height="7" rx="1.5" /></>,
-  play: <path d="m9 5 11 7-11 7V5Z" />,
+  mark: <><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" /><path d="M8 12.5h3l1.5-3 2 6 1.5-3h0" /></>,
+  grid: <><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" /><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" /><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" /></>,
+  play: <path d="M8 5.5v13l10.5-6.5L8 5.5Z" />,
+  pause: <><path d="M8 5v14M16 5v14" /></>,
   globe: <><circle cx="12" cy="12" r="9" /><ellipse cx="12" cy="12" rx="4" ry="9" /><path d="M3 12h18" /></>,
-  bell: <><path d="M5 17h14l-2-3V9A5 5 0 0 0 7 9v5l-2 3Z" /><path d="M10 21h4" /></>,
-  settings: <><circle cx="12" cy="12" r="4" /><path d="m10 3-1 3-3 1-3 3v4l3 1 1 3 3 3h4l1-3 3-1 3-3v-4l-3-1-1-3-3-3h-4Z" /></>,
+  bell: <><path d="M6 16.5h12l-1.5-2.5V10a4.5 4.5 0 0 0-9 0v4L6 16.5Z" /><path d="M10 20h4" /></>,
+  settings: <><path d="M4 7h10M18 7h2M4 17h4M12 17h8" /><circle cx="16" cy="7" r="2" /><circle cx="10" cy="17" r="2" /></>,
   plus: <path d="M12 5v14M5 12h14" />,
-  down: <path d="m8 10 4 4 4-4" />,
   arrow: <path d="M5 12h14m-5-5 5 5-5 5" />,
-  check: <path d="m5 12 4 4L19 6" />,
+  back: <path d="M19 12H5m5-5-5 5 5 5" />,
+  check: <path d="m5 12.5 4.5 4.5L19 7" />,
+  "check-circle": <><circle cx="12" cy="12" r="9" /><path d="m8 12.5 2.8 2.8L16.5 9" /></>,
+  "x-circle": <><circle cx="12" cy="12" r="9" /><path d="m9 9 6 6m0-6-6 6" /></>,
+  "alert-circle": <><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5M12 16.5v.01" /></>,
+  minus: <><circle cx="12" cy="12" r="9" /><path d="M8.5 12h7" /></>,
   clock: <><circle cx="12" cy="12" r="9" /><path d="M12 7v5l3 2" /></>,
-  search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 5 5" /></>,
-  refresh: <><path d="M20 7v5h-5M4 17v-5h5" /><path d="M6 7a7 7 0 0 1 12-1l2 6M4 12l2 6a7 7 0 0 0 12-1" /></>,
-  link: <><path d="m10 8 3-3a5 5 0 0 1 7 7l-3 3M14 16l-3 3a5 5 0 0 1-7-7l3-3M8 16l8-8" /></>,
-  code: <path d="m8 6-6 6 6 6m8-12 6 6-6 6m-3-15-2 18" />,
-  help: <><circle cx="12" cy="12" r="9" /><path d="M9 9a3 3 0 1 1 4 3v2m-1 3h.01" /></>,
-  external: <><path d="M14 3h7v7m0-7L10 14M10 4H4v16h16v-6" /></>,
-  monitor: <><rect x="3" y="4" width="18" height="13" rx="2" /><path d="M8 21h8m-4-4v4" /></>,
-  mobile: <><rect x="7" y="2" width="10" height="20" rx="2" /><path d="M11 18h2" /></>,
+  search: <><circle cx="10.5" cy="10.5" r="6.5" /><path d="m16 16 4.5 4.5" /></>,
+  refresh: <><path d="M20 6v5h-5" /><path d="M19.5 11A7.5 7.5 0 1 0 17 17.5" /></>,
+  link: <><path d="M10 14a4 4 0 0 0 5.7 0l3-3a4 4 0 0 0-5.7-5.7l-1 1" /><path d="M14 10a4 4 0 0 0-5.7 0l-3 3a4 4 0 0 0 5.7 5.7l1-1" /></>,
+  code: <path d="m8.5 7-5 5 5 5m7-10 5 5-5 5" />,
+  help: <><circle cx="12" cy="12" r="9" /><path d="M9.5 9.5a2.5 2.5 0 1 1 3.5 2.3c-.6.3-1 .8-1 1.5v.7M12 16.5v.01" /></>,
+  monitor: <><rect x="3" y="4.5" width="18" height="12" rx="1.5" /><path d="M8.5 20h7M12 16.5V20" /></>,
+  mobile: <><rect x="7" y="2.5" width="10" height="19" rx="2" /><path d="M11 18.5h2" /></>,
   x: <path d="m6 6 12 12M18 6 6 18" />,
-  bolt: <path d="m13 2-9 12h7l-1 8 10-13h-7l1-7Z" />,
+  info: <><circle cx="12" cy="12" r="9" /><path d="M12 11v5.5M12 7.5v.01" /></>,
+  file: <><path d="M6 3.5h8l4 4v13H6v-17Z" /><path d="M14 3.5v4h4" /></>,
+  cursor: <path d="m6 4 12 7-5.5 1.5L10 18 6 4Z" />,
 };
 
-export function Icon({ name, size = 18 }: { name: string; size?: number }) {
+export function Icon({ name, size = 16, className }: { name: string; size?: number; className?: string }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.65" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      {paths[name] || paths.grid}
+    <svg className={className} width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      {paths[name] ?? paths.grid}
     </svg>
   );
 }
 
-export function Button({ children, onClick, primary = false, disabled = false, type = "button" }: { children: ReactNode; onClick?: () => void; primary?: boolean; disabled?: boolean; type?: "button" | "submit" }) {
+export function Button({ children, onClick, variant, size, disabled = false, type = "button", label }: { children: ReactNode; onClick?: () => void; variant?: "primary" | "accent" | "ghost"; size?: "sm" | "lg"; disabled?: boolean; type?: "button" | "submit"; label?: string }) {
   return (
-    <button type={type} disabled={disabled} onClick={onClick} className={`btn ${primary ? "primary" : ""}`}>
+    <button type={type} disabled={disabled} onClick={onClick} aria-label={label} className={["btn", variant, size].filter(Boolean).join(" ")}>
       {children}
     </button>
   );
 }
 
-export function Badge({ status }: { status: Status }) {
-  return <span className={`badge ${status}`}><span className="dot" />{status}</span>;
+const STATUS_WORD: Record<Status, string> = { passing: "Passing", failed: "Failing", warning: "Slow" };
+
+export function StatusLabel({ status }: { status: Status }) {
+  return <span className={`status ${status}`}><span className="d" aria-hidden="true" />{STATUS_WORD[status]}</span>;
 }
 
-export function Uptime({ status, wide = false }: { status: Status; wide?: boolean }) {
+/** Status icon for a single run/step. */
+export function StepIcon({ status }: { status: "passed" | "failed" | "skipped" | "warning" }) {
+  if (status === "passed") return <Icon name="check-circle" className="t-ok" />;
+  if (status === "failed") return <Icon name="x-circle" className="t-bad" />;
+  if (status === "warning") return <Icon name="alert-circle" className="t-warn" />;
+  return <Icon name="minus" className="faint" />;
+}
+
+/** 30 days of daily results, oldest first. Deterministic demo pattern per status. */
+export function Uptime({ status, days = 30 }: { status: Status; days?: number }) {
+  const bad = (i: number) => status === "failed" && (i === 11 || i >= days - 1);
+  const warn = (i: number) => status === "warning" && (i === 19 || i === 26);
+  const failing = Array.from({ length: days }, (_, i) => bad(i)).filter(Boolean).length;
   return (
-    <div className={`uptime ${wide ? "wide" : ""}`} aria-label={`30-day uptime history, ${status}`} role="img">
-      {Array.from({ length: wide ? 75 : 36 }, (_, i) => (
-        <i
-          key={i}
-          className={status === "failed" && (i === 12 || i > (wide ? 71 : 33)) ? "red" : status === "warning" && (i === 24 || i === 29) ? "amber" : ""}
-          style={{ height: wide ? `${20 + ((i * 7) % 19)}px` : undefined }}
-        />
-      ))}
+    <div className="uptime" role="img" aria-label={`Last ${days} days: ${failing ? `${failing} days with failures` : "no failures"}`}>
+      {Array.from({ length: days }, (_, i) => <i key={i} className={bad(i) ? "bad" : warn(i) ? "warn" : ""} />)}
     </div>
   );
 }

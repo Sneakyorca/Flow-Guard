@@ -1,9 +1,9 @@
 "use client";
 import { useEffect, useState } from "react";
+import { DEFAULT_WORKSPACE as DEFAULT } from "@/lib/demo-data";
 
 const KEY = "fg.workspaceName";
 const EVENT = "fg:workspace";
-const DEFAULT = "Acme Workspace";
 
 /** Workspace display name shared by the sidebar, top bar and settings (demo: per-browser). */
 export function useWorkspaceName(): [string, (name: string) => void] {

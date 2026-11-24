@@ -17,7 +17,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {toast && (
         <div role="status" className="toast">
-          <Icon name="check" size={18} />
+          <Icon name="check-circle" size={16} />
           {toast}
           <button aria-label="Dismiss notification" onClick={() => setToast("")}>
             <Icon name="x" size={16} />

@@ -78,7 +78,8 @@ export async function getReplay(token: string): Promise<ReplayData | null> {
       ["Runner", "GitHub Actions (free tier)"],
       ["Total duration", `${((run.duration_ms ?? 0) / 1000).toFixed(1)} seconds`],
     ],
-    rootCause: run.explanation ? [run.explanation.suggestion, ...run.explanation.evidence].join(" ") : run.error_message ?? "No errors recorded.",
+    suggestion: run.explanation?.suggestion ?? (run.status === "FAILED" ? "Watch the recording and check the console and network tabs." : ""),
+    evidence: run.explanation?.evidence ?? [],
     videoUrl,
     durationSeconds: Math.round((run.duration_ms ?? 0) / 1000),
   };
