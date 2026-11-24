@@ -1,0 +1,83 @@
+# Zero-cost scheduler: GitHub Actions cron runs every due flow in a headless browser.
+# Free on public repos; private repos get 2,000 free minutes/month (a 3-step flow takes ~1 min).
+#
+# Repo secrets (Settings → Secrets and variables → Actions):
+#   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   required to do anything (job skips without them)
+#   PUBLIC_APP_URL                            e.g. https://flowguard.vercel.app (for replay links)
+#   GEMINI_API_KEY / GROQ_API_KEY             optional, free-tier LLM resolver
+#   SLACK_WEBHOOK_URL                         optional fallback when a workspace has no webhook
+name: Scheduled flow runs
+
+on:
+  schedule:
+    - cron: "7 * * * *" # hourly (minute 7 avoids the top-of-hour rush)
+  workflow_dispatch:
+    inputs:
+      flow_id:
+        description: "Run a single flow now (leave empty to run all due flows)"
+        required: false
+
+concurrency:
+  group: scheduled-runs
+  cancel-in-progress: false
+
+jobs:
+  run-due:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      PUBLIC_APP_URL: ${{ secrets.PUBLIC_APP_URL }}
+      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
+      FLOWGUARD_RESOLVER: ${{ vars.FLOWGUARD_RESOLVER }}
+    steps:
+      - name: Check secrets
+        id: check
+        run: |
+          if [ -z "$SUPABASE_URL" ] || [ -z "$SUPABASE_SERVICE_ROLE_KEY" ]; then
+            echo "Supabase secrets are not configured; skipping scheduled runs."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v4
+        if: steps.check.outputs.enabled == 'true'
+
+      - uses: actions/setup-node@v4
+        if: steps.check.outputs.enabled == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        if: steps.check.outputs.enabled == 'true'
+        run: npm ci
+
+      - name: Install Chromium
+        if: steps.check.outputs.enabled == 'true'
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/worker
+
+      - name: Run due flows
+        if: steps.check.outputs.enabled == 'true'
+        env:
+          FLOW_ID: ${{ github.event.inputs.flow_id }}
+        run: |
+          if [ -n "$FLOW_ID" ]; then
+            npm run run-due -w @flowguard/worker -- --flow "$FLOW_ID"
+          else
+            npm run run-due -w @flowguard/worker
+          fi
+
+      - name: Keep local artifacts for debugging
+        if: always() && steps.check.outputs.enabled == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: runs-${{ github.run_id }}
+          path: runs/
+          retention-days: 3
+          if-no-files-found: ignore
