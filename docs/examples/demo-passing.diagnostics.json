@@ -1,0 +1,75 @@
+{
+  "run_id": "run-20261124-230302-5ed6d4",
+  "status": "PASSING",
+  "start_url": "https://demo.playwright.dev/todomvc",
+  "final_url": "https://demo.playwright.dev/todomvc/#/active",
+  "viewport": "desktop",
+  "resolver": "heuristic",
+  "started_at": "2026-11-24T23:03:02.125Z",
+  "duration_ms": 2272,
+  "failed_step_index": null,
+  "error_message": null,
+  "steps": [
+    {
+      "index": 0,
+      "instruction": "Type \"Buy milk\" into the new todo input and press Enter",
+      "status": "passed",
+      "duration_ms": 115,
+      "actions": [
+        {
+          "action": "fill",
+          "target_id": "4",
+          "selector_or_coordinates": "[data-fg-id=\"4\"]",
+          "value": "Buy milk",
+          "reasoning": "Type \"Buy milk\". Matched \"the new todo input\" to #4 textbox \"What needs to be done?\" with score 46 (next best #2 link \"real TodoMVC app.\" scored 4)."
+        },
+        {
+          "action": "press",
+          "target_id": "4",
+          "selector_or_coordinates": "[data-fg-id=\"4\"]",
+          "value": "Enter",
+          "reasoning": "Press Enter in the field filled by the previous action."
+        }
+      ],
+      "reasoning": "Type \"Buy milk\". Matched \"the new todo input\" to #4 textbox \"What needs to be done?\" with score 46 (next best #2 link \"real TodoMVC app.\" scored 4). Press Enter in the field filled by the previous action."
+    },
+    {
+      "index": 1,
+      "instruction": "Assert \"Buy milk\" is in the list",
+      "status": "passed",
+      "duration_ms": 38,
+      "actions": [
+        {
+          "action": "assert_text",
+          "target_id": "6",
+          "selector_or_coordinates": "[data-fg-id=\"6\"]",
+          "value": "Buy milk",
+          "reasoning": "Expect \"Buy milk\" to be visible; currently found in #6 label \"Buy milk\"."
+        }
+      ],
+      "reasoning": "Expect \"Buy milk\" to be visible; currently found in #6 label \"Buy milk\"."
+    },
+    {
+      "index": 2,
+      "instruction": "Click the \"Active\" filter",
+      "status": "passed",
+      "duration_ms": 46,
+      "actions": [
+        {
+          "action": "click",
+          "target_id": "9",
+          "selector_or_coordinates": "[data-fg-id=\"9\"]",
+          "value": null,
+          "reasoning": "Click. Matched \"the \"Active\" filter\" to #9 link \"Active\" with score 88 (next best #2 link \"real TodoMVC app.\" scored 14)."
+        }
+      ],
+      "reasoning": "Click. Matched \"the \"Active\" filter\" to #9 link \"Active\" with score 88 (next best #2 link \"real TodoMVC app.\" scored 14)."
+    }
+  ],
+  "console_logs": [],
+  "network_errors": [],
+  "artifacts": {
+    "video": "runs/run-20261124-230302-5ed6d4/video.webm",
+    "failure_screenshot": null
+  }
+}

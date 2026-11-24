@@ -54,6 +54,8 @@ export const DomNode = z.object({
   value: z.string().optional(),
   checked: z.boolean().optional(),
   selected: z.boolean().optional(),
+  /** id / name / class / data-testid tokens, useful for keyword matching ("new-todo"). */
+  hint: z.string().optional(),
 });
 export type DomNode = z.infer<typeof DomNode>;
 
