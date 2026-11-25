@@ -41,6 +41,11 @@ jobs:
       BREVO_API_KEY: ${{ secrets.BREVO_API_KEY }}
       ALERT_FROM_EMAIL: ${{ secrets.ALERT_FROM_EMAIL }}
       FLOWGUARD_RESOLVER: ${{ vars.FLOWGUARD_RESOLVER }}
+      # Optional repository variables; empty = defaults in apps/worker/src/cleanup.ts (7 / 30 / 90 / 30 days).
+      RETAIN_PASSING_DAYS: ${{ vars.RETAIN_PASSING_DAYS }}
+      RETAIN_FAILED_DAYS: ${{ vars.RETAIN_FAILED_DAYS }}
+      RETAIN_RUN_ROWS_DAYS: ${{ vars.RETAIN_RUN_ROWS_DAYS }}
+      RETAIN_SCAN_DAYS: ${{ vars.RETAIN_SCAN_DAYS }}
     steps:
       - name: Check secrets
         id: check
