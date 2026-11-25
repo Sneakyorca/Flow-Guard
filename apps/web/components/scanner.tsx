@@ -109,6 +109,7 @@ export function LandingFooter() {
     <footer className="section" style={{ borderTop: "1px solid var(--line)", marginTop: 48, fontSize: 13, color: "var(--muted)", display: "flex", justifyContent: "space-between", gap: 16, flexWrap: "wrap" }}>
       <span>Oluso watches the pages that make you money: signup, login, checkout.</span>
       <nav aria-label="Legal" style={{ display: "flex", gap: 16, flexWrap: "wrap" }}>
+        <Link className="link" href="/help">Help</Link>
         <Link className="link" href="/terms">Terms</Link>
         <Link className="link" href="/privacy">Privacy</Link>
         <a className="link" href="https://github.com/Sneakyorca/Flow-Guard">Source on GitHub</a>

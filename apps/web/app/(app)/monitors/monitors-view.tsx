@@ -83,7 +83,7 @@ export function MonitorsView() {
       {!live && (
         <div className="notice" style={{ marginBottom: 20 }}>
           <Icon name="info" />
-          <span>Sample workspace. Runs, uptime and replays below are example data; connect Supabase (see the <a className="link" href="https://github.com/Sneakyorca/Flow-Guard#readme">setup guide</a>) to see your own.</span>
+          <span>Sample workspace. Runs, uptime and replays below are example data; connect Supabase (see the <a className="link" href="https://github.com/Sneakyorca/Flow-Guard#free-tier-setup-end-to-end" target="_blank" rel="noreferrer">setup guide</a>) to see your own.</span>
         </div>
       )}
 
