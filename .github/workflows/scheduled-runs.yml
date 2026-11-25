@@ -5,6 +5,7 @@
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   required to do anything (job skips without them)
 #   PUBLIC_APP_URL                            e.g. https://flowguard.vercel.app (for replay links)
 #   GEMINI_API_KEY / GROQ_API_KEY             optional, free-tier LLM resolver
+#   ANTHROPIC_API_KEY                         optional, paid; used first when set (falls back to Gemini)
 #   SLACK_WEBHOOK_URL                         optional fallback when a workspace has no webhook
 name: Scheduled flow runs
 
@@ -31,6 +32,7 @@ jobs:
       PUBLIC_APP_URL: ${{ secrets.PUBLIC_APP_URL }}
       GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
       GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
       FLOWGUARD_RESOLVER: ${{ vars.FLOWGUARD_RESOLVER }}
     steps:
