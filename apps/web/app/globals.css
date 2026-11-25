@@ -462,7 +462,7 @@ table.flows tr.is-failed { background: color-mix(in srgb, var(--bad-bg) 60%, tra
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 
 /* ---------- public replay page ---------- */
-.public-replay { max-width: 1240px; margin: 0 auto; padding: 8px 24px 0; }
+.public-replay { max-width: 1080px; margin: 0 auto; padding: 8px 24px 0; }
 .public-note { margin: 8px 0 20px; font-size: 13px; color: var(--muted); }
 .cta-band { display: flex; align-items: center; justify-content: space-between; gap: 24px; flex-wrap: wrap; margin-top: 32px; padding: 22px 24px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); }
 .cta-band h2 { font-size: 17px; font-weight: 600; }
@@ -476,7 +476,7 @@ table.flows tr.is-failed { background: color-mix(in srgb, var(--bad-bg) 60%, tra
 .legal-intro { margin-top: 20px; }
 .legal-intro p + p, .legal section p + p, .legal section p + ul, .legal section ul + p, .legal section table + p { margin-top: 10px; }
 .legal-toc { margin: 24px 0 8px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 14px; }
-.legal-toc ol { margin-top: 6px; padding-left: 20px; display: grid; gap: 2px; }
+.legal-toc ol { margin-top: 6px; padding-left: 22px; display: grid; gap: 2px; list-style: decimal; }
 .legal section { padding-top: 28px; scroll-margin-top: 16px; }
 .legal h2 { font-size: 19px; font-weight: 600; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.01em; }
 .legal h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin: 14px 0 4px; }
