@@ -8,12 +8,14 @@ export { heuristicResolver } from "./heuristic.js";
 
 /**
  * Pick the resolver from FLOWGUARD_RESOLVER.
- * Unset: gemini if GEMINI_API_KEY is present, otherwise the zero-key heuristic.
+ * Unset: anthropic if ANTHROPIC_API_KEY is present, else gemini if GEMINI_API_KEY is, else the zero-key heuristic.
  * LLM resolvers fall back to the heuristic on API errors (rate limits on free tiers etc.)
  * so a flaky provider never turns into a false "FAILED" alert.
  */
 export function getResolver(name = process.env.FLOWGUARD_RESOLVER): Resolver {
-  const chosen = name ? ResolverName.parse(name.trim().toLowerCase()) : process.env.GEMINI_API_KEY ? "gemini" : "heuristic";
+  const chosen = name?.trim()
+    ? ResolverName.parse(name.trim().toLowerCase())
+    : process.env.ANTHROPIC_API_KEY ? "anthropic" : process.env.GEMINI_API_KEY ? "gemini" : "heuristic";
   switch (chosen) {
     case "heuristic":
       return heuristicResolver;

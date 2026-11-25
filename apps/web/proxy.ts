@@ -14,6 +14,14 @@ const AUTH_PAGES = ["/login", "/signup"];
 export async function proxy(request: NextRequest) {
   if (!supabaseConfigured) return NextResponse.next();
 
+  // If /auth/callback isn't in Supabase's Redirect URLs, confirmation links fall back to the
+  // Site URL ("/?code=..."). Finish the sign-in anyway instead of dropping the code.
+  if (request.nextUrl.pathname === "/" && request.nextUrl.searchParams.has("code")) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/callback";
+    return NextResponse.redirect(url);
+  }
+
   let response = NextResponse.next({ request });
   const supabase = createServerClient(SUPABASE_URL, SUPABASE_ANON_KEY, {
     cookies: {

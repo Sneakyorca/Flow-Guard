@@ -96,7 +96,7 @@ export function MonitorsView() {
       <div className="page-head">
         <div>
           <h1>Monitors</h1>
-          <p>{flows.length} journeys on {domains} sites, each run in a real browser every hour.</p>
+          <p>{flows.length} {flows.length === 1 ? "journey" : "journeys"} on {domains} {domains === 1 ? "site" : "sites"}, each run in a real browser every hour.</p>
         </div>
         <Link className="btn primary" href="/flows/new"><Icon name="plus" /> New flow</Link>
       </div>

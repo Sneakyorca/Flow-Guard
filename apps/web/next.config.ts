@@ -12,6 +12,8 @@ try {
 const nextConfig: NextConfig = {
   // The shared package ships TypeScript source.
   transpilePackages: ["@flowguard/shared"],
+  // The dev-only Next.js badge sits bottom-left by default, on top of the sidebar's Sign out.
+  devIndicators: { position: "bottom-right" },
   turbopack: { root },
   outputFileTracingRoot: root,
 };

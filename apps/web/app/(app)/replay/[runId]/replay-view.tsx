@@ -62,7 +62,17 @@ export function ReplayView({ data, shareId }: { data: ReplayData; shareId: strin
 
       <div className="replay-grid">
         <div style={{ display: "grid", gap: 16, minWidth: 0 }}>
-          <ReplayPlayer videoUrl={data.videoUrl} />
+          {data.source === "demo" || data.videoUrl ? (
+            <ReplayPlayer videoUrl={data.videoUrl} />
+          ) : (
+            // A real run without a stored video: say so rather than showing the sample checkout.
+            <section className="panel player" aria-label="Recording">
+              <div className="player-bar"><span>Recording</span></div>
+              <p className="muted" style={{ padding: "40px 20px", textAlign: "center", fontSize: 14 }}>
+                No video was saved for this run. The steps and logs below are from the real run.
+              </p>
+            </section>
+          )}
           <section className="panel" aria-labelledby="steps-h">
             <div className="panel-head"><h2 id="steps-h">Steps</h2><span className="meta num">{passed} of {data.steps.length} passed</span></div>
             <ol className="steplog">
