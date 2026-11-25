@@ -256,3 +256,60 @@ export function parseSteps(input: string): FlowStep[] {
     .filter(Boolean)
     .map((instruction) => ({ instruction }));
 }
+
+/* ------------------------------------------------------------------ */
+/* Public scan URL safety (SSRF): shared by the web API and the worker */
+/* ------------------------------------------------------------------ */
+
+function ipv4Parts(ip: string): number[] | null {
+  const m = ip.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/);
+  if (!m) return null;
+  const p = m.slice(1).map(Number);
+  return p.every((n) => n >= 0 && n <= 255) ? p : null;
+}
+
+/** True for loopback, private, link-local, CGNAT, multicast, reserved and cloud-metadata addresses. */
+export function isPrivateIp(ip: string): boolean {
+  const v = ip.trim().toLowerCase().replace(/^\[|\]$/g, "");
+  const p4 = ipv4Parts(v.startsWith("::ffff:") ? v.slice(7) : v);
+  if (p4) {
+    const [a, b] = p4;
+    return (
+      a === 0 || a === 10 || a === 127 || a >= 224 ||
+      (a === 100 && b >= 64 && b <= 127) || // CGNAT
+      (a === 169 && b === 254) ||           // link-local, cloud metadata
+      (a === 172 && b >= 16 && b <= 31) ||
+      (a === 192 && b === 168) ||
+      (a === 192 && b === 0) ||             // 192.0.0.0/24 and 192.0.2.0/24 (TEST-NET-1)
+      (a === 198 && (b === 18 || b === 19)) ||
+      (a === 198 && b === 51) || (a === 203 && b === 0)
+    );
+  }
+  if (v.includes(":")) {
+    return v === "::" || v === "::1" || v.startsWith("::ffff:") || /^f[cd]/.test(v) || /^fe[89ab]/.test(v) || v.startsWith("ff") || v.startsWith("64:ff9b") || v.startsWith("2001:db8");
+  }
+  return false;
+}
+
+export type ScanUrlCheck = { ok: true; url: string; host: string } | { ok: false; reason: string };
+
+/** Syntax-level checks for a public scan URL (DNS is checked separately by the caller). */
+export function checkScanUrl(input: string): ScanUrlCheck {
+  let u: URL;
+  try {
+    u = new URL(/^https?:\/\//i.test(input.trim()) ? input.trim() : `https://${input.trim()}`);
+  } catch {
+    return { ok: false, reason: "That doesn’t look like a website address." };
+  }
+  if (u.protocol !== "http:" && u.protocol !== "https:") return { ok: false, reason: "Only http and https addresses can be scanned." };
+  if (u.username || u.password) return { ok: false, reason: "Addresses with a username or password can’t be scanned." };
+  if (u.port && u.port !== "80" && u.port !== "443") return { ok: false, reason: "Only the standard web ports (80 and 443) can be scanned." };
+  const host = u.hostname.toLowerCase().replace(/\.$/, "");
+  if (!host.includes(".") || /(^|\.)(localhost|local|internal|intranet|lan|home|corp|localdomain|home\.arpa)$/.test(host)) {
+    return { ok: false, reason: "That address isn’t on the public internet." };
+  }
+  if (isPrivateIp(host)) return { ok: false, reason: "That address isn’t on the public internet." };
+  if (ipv4Parts(host) || host.includes(":")) return { ok: false, reason: "Please enter a domain name rather than an IP address." };
+  u.hash = "";
+  return { ok: true, url: u.toString(), host };
+}

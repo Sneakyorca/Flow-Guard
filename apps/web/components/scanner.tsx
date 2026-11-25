@@ -1,6 +1,8 @@
 "use client";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useState } from "react";
+import { supabaseConfigured } from "@/lib/supabase/env";
 import { DEMO_REPLAY_ID, sampleScan } from "@/lib/demo-data";
 import { Button } from "./ui";
 import { ReplayPlayer } from "./replay-player";
@@ -12,12 +14,30 @@ const CHECKS = [
 ];
 
 /**
- * Public free scan. In this milestone the form doesn't run a scan from the website yet;
- * real scans run with `npm run scan -- --url <site>` and the example below is real output.
+ * Public free scan. With Supabase connected, the form posts to /api/scans, which queues the
+ * scan on GitHub Actions and opens /scan/<token>. In demo mode it shows the sample report.
  */
 export function Scanner({ inApp = false }: { inApp?: boolean }) {
+  const router = useRouter();
   const [scanUrl, setScanUrl] = useState("");
   const [state, setState] = useState<"idle" | "running" | "done">("idle");
+  const [message, setMessage] = useState("");
+
+  async function start(e: React.FormEvent) {
+    e.preventDefault();
+    setMessage("");
+    if (!supabaseConfigured) {
+      setState("running");
+      window.setTimeout(() => setState("done"), 1600);
+      return;
+    }
+    setState("running");
+    const res = await fetch("/api/scans", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: scanUrl }) }).catch(() => null);
+    const body = (await res?.json().catch(() => ({}))) as { token?: string; message?: string } | undefined;
+    if (res?.ok && body?.token) return router.push(`/scan/${body.token}`);
+    setState("idle");
+    setMessage(body?.message ?? "Couldn’t reach the server. Try again in a minute.");
+  }
   let host = "";
   try { host = new URL(scanUrl).hostname; } catch {}
 
@@ -33,22 +53,18 @@ export function Scanner({ inApp = false }: { inApp?: boolean }) {
             <p>Paste your shop’s address. In about a minute we open it in a phone-sized browser, follow up to 15 pages, and tell you what’s broken.</p>
           </>
         )}
-        <form
-          className="scan-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            setState("running");
-            window.setTimeout(() => setState("done"), 1600);
-          }}
-        >
+        <form className="scan-form" onSubmit={start}>
           <label className="sr-only" htmlFor="scan-url">Website address</label>
-          <input id="scan-url" className="input" required type="url" value={scanUrl} onChange={(e) => setScanUrl(e.target.value)} placeholder="https://yourshop.com" />
+          <input id="scan-url" className="input" required type="text" inputMode="url" autoComplete="url" value={scanUrl} onChange={(e) => setScanUrl(e.target.value)} placeholder="https://yourshop.com" />
           <Button variant={inApp ? "primary" : "accent"} size="lg" type="submit" disabled={state === "running"}>
             {state === "running" ? "Scanning…" : "Scan my site"}
           </Button>
         </form>
+        {message && <p className="auth-error" role="alert" style={{ marginTop: 10 }}>{message}</p>}
         <p className="scan-small">
-          {state === "done"
+          {supabaseConfigured
+            ? <>Free, no account. We open up to 15 public pages once, on a phone-sized screen. Only scan sites you’re happy for us to visit; see the <Link className="link" href="/terms">terms</Link>.</>
+            : state === "done"
             ? <>Scans from this page aren’t switched on yet, so nothing was sent to {host || "your site"}. Below is a real report from another site.</>
             : <>Website scans aren’t live yet: this preview shows a real report from a test shop. Developers can run it today with <span className="mono">npm run scan</span>.</>}
         </p>

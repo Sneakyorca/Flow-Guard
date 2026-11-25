@@ -10,7 +10,8 @@
     "dev": "tsx watch src/queue.ts",
     "queue": "tsx src/queue.ts",
     "install-browser": "playwright install chromium",
-    "typecheck": "tsc -p tsconfig.json"
+    "typecheck": "tsc -p tsconfig.json",
+    "scan-one": "tsx src/cli/scan-one.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^1.14.0",

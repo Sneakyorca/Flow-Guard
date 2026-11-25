@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server";
+import { dispatchWorkflow } from "@/lib/github-dispatch";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 /**
@@ -6,9 +7,7 @@ import { getSupabaseServer } from "@/lib/supabase/server";
  * starts the `scheduled-runs.yml` workflow with `flow_id` set. Results land in Monitors when
  * the run finishes, usually within 2–3 minutes.
  *
- * Needs on the web host (e.g. Vercel env vars):
- *   GITHUB_DISPATCH_TOKEN  fine-grained token for this repo with "Actions: Read and write"
- *   GITHUB_REPO            owner/name, defaults to Sneakyorca/Flow-Guard
+ * Needs GITHUB_DISPATCH_TOKEN on the web host (see lib/github-dispatch.ts).
  */
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;
@@ -22,29 +21,15 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const { data: flow } = await supabase.from("flows").select("id, name").eq("id", id).maybeSingle();
   if (!flow) return NextResponse.json({ message: "That flow doesn’t exist in your workspace." }, { status: 404 });
 
-  const token = process.env.GITHUB_DISPATCH_TOKEN;
-  const repo = process.env.GITHUB_REPO || "Sneakyorca/Flow-Guard";
-  if (!token) {
+  const result = await dispatchWorkflow("scheduled-runs.yml", { flow_id: flow.id });
+  if (!result.ok && result.reason === "no-token") {
     return NextResponse.json(
       { message: `“Run now” isn’t set up on this server yet (GITHUB_DISPATCH_TOKEN is missing), so nothing was started. Scheduled runs are unaffected by this setting.` },
       { status: 501 },
     );
   }
-
-  const res = await fetch(`https://api.github.com/repos/${repo}/actions/workflows/scheduled-runs.yml/dispatches`, {
-    method: "POST",
-    headers: {
-      Authorization: `Bearer ${token}`,
-      Accept: "application/vnd.github+json",
-      "X-GitHub-Api-Version": "2022-11-28",
-      "User-Agent": "flowguard-web",
-    },
-    body: JSON.stringify({ ref: "main", inputs: { flow_id: flow.id } }),
-  });
-  if (!res.ok) {
-    const detail = await res.text().catch(() => "");
-    console.error(`[run-now] GitHub dispatch failed: ${res.status} ${detail.slice(0, 300)}`);
-    return NextResponse.json({ message: `GitHub refused to start the run (${res.status}). Check the token’s repo access and Actions permission.` }, { status: 502 });
+  if (!result.ok) {
+    return NextResponse.json({ message: `GitHub refused to start the run (${result.status ?? "no answer"}). Check the token’s repo access and Actions permission.` }, { status: 502 });
   }
   return NextResponse.json({ message: `“${flow.name}” is starting on GitHub Actions. The result usually lands in 2–3 minutes; this page updates by itself.` }, { status: 202 });
 }

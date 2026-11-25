@@ -1,0 +1,60 @@
+# Free public scan, started by the website (POST /api/scans → workflow_dispatch with scan_id).
+# Runs the 60-second scanner for one queued public_scans row and stores the report.
+#
+# Uses the same repo secrets as scheduled-runs.yml: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY.
+name: Public scan
+
+on:
+  workflow_dispatch:
+    inputs:
+      scan_id:
+        description: "public_scans.id to run"
+        required: true
+
+concurrency:
+  group: public-scan-${{ github.event.inputs.scan_id }}
+  cancel-in-progress: false
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    timeout-minutes: 6
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci --no-audit --no-fund
+
+      - name: Playwright version
+        id: pw
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      - name: Cache Playwright browsers
+        id: pw-cache
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
+
+      - name: Install Chromium
+        if: steps.pw-cache.outputs.cache-hit != 'true'
+        run: npx playwright install --with-deps chromium
+        working-directory: apps/worker
+
+      - name: Install Chromium system libraries (browser restored from cache)
+        if: steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+        working-directory: apps/worker
+
+      - name: Run the scan
+        env:
+          SCAN_ID: ${{ github.event.inputs.scan_id }}
+        run: npm run scan-one -w @flowguard/worker -- --scan "$SCAN_ID"

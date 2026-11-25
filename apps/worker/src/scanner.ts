@@ -1,7 +1,7 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
 import path from "node:path";
 import type { BrowserContext, Page } from "playwright";
-import { ScanReport, VIEWPORTS, type BrokenLink, type OverflowIssue, type ScanConsoleError } from "@flowguard/shared";
+import { isPrivateIp, ScanReport, VIEWPORTS, type BrokenLink, type OverflowIssue, type ScanConsoleError } from "@flowguard/shared";
 import { launchBrowser, newContext } from "./browser.js";
 
 export interface ScanOptions {
@@ -14,6 +14,20 @@ export interface ScanOptions {
   /** Also check links to other domains (off by default: slower, and third parties often block bots). */
   checkExternal?: boolean;
   log?: (msg: string) => void;
+  /** Public scans: refuse any request to localhost or a private/internal IP (SSRF guard). */
+  blockPrivateNetwork?: boolean;
+}
+
+/** Abort requests whose host is localhost or a private/internal IP literal. */
+async function guardContext(ctx: BrowserContext, on: boolean | undefined): Promise<BrowserContext> {
+  if (!on) return ctx;
+  await ctx.route("**/*", (route) => {
+    let host = "";
+    try { host = new URL(route.request().url()).hostname.toLowerCase(); } catch { return route.abort("blockedbyclient"); }
+    if (host === "localhost" || host.endsWith(".localhost") || isPrivateIp(host)) return route.abort("blockedbyclient");
+    return route.continue();
+  });
+  return ctx;
 }
 
 type RawConsoleError = Pick<ScanConsoleError, "page" | "type" | "text">;
@@ -61,7 +75,7 @@ export async function scanSite(opts: ScanOptions): Promise<ScanReport> {
   const browser = await launchBrowser();
   try {
     // 1) Homepage on mobile with video (the "replay" a prospect sees in the report).
-    const vctx = await newContext(browser, "mobile", videoTmp);
+    const vctx = await guardContext(await newContext(browser, "mobile", videoTmp), opts.blockPrivateNetwork);
     const vpage = await vctx.newPage();
     try {
       await vpage.goto(startUrl, { waitUntil: "domcontentloaded", timeout: Math.min(20_000, left()) });
@@ -79,7 +93,7 @@ export async function scanSite(opts: ScanOptions): Promise<ScanReport> {
     }
 
     // 2) Same-origin crawl on mobile viewport.
-    const ctx = await newContext(browser, "mobile");
+    const ctx = await guardContext(await newContext(browser, "mobile"), opts.blockPrivateNetwork);
     const queue: string[] = [startUrl];
     const queued = new Set(queue);
     while (queue.length && pages.length < maxPages && left() > 8_000) {
