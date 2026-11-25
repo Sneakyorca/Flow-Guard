@@ -9,7 +9,7 @@ export async function sendSlackAlert(webhookUrl: string, flow: Pick<FlowRow, "na
     d.network_errors.length ? `${d.network_errors.length} failed requests` : null,
   ].filter(Boolean).join(" · ");
 
-  const text = `FlowGuard: "${flow.name}" failed — ${d.explanation?.title ?? stepLine}`;
+  const text = `Oluso: "${flow.name}" failed — ${d.explanation?.title ?? stepLine}`;
   const body = {
     text,
     blocks: [
@@ -47,13 +47,13 @@ export async function sendEmailAlert(to: string, flow: Pick<FlowRow, "name" | "s
     "",
     `Watch the replay: ${replayUrl}`,
     "",
-    "You get this because email alerts are on in FlowGuard → Alerts.",
+    "You get this because email alerts are on in Oluso → Alerts.",
   ].filter((l, i, a) => l !== "" || a[i - 1] !== "");
   const res = await fetch("https://api.brevo.com/v3/smtp/email", {
     method: "POST",
     headers: { "api-key": key, "Content-Type": "application/json", Accept: "application/json" },
     body: JSON.stringify({
-      sender: { email: from, name: process.env.ALERT_FROM_NAME || "FlowGuard" },
+      sender: { email: from, name: process.env.ALERT_FROM_NAME || "Oluso" },
       to: [{ email: to }],
       subject: `Failing: ${flow.name} on ${host}`,
       textContent: lines.join("\n"),
@@ -62,7 +62,7 @@ export async function sendEmailAlert(to: string, flow: Pick<FlowRow, "name" | "s
 <p style="padding:12px 14px;background:#fbecea;border-radius:6px">${html(headline)}</p>
 ${d.explanation?.suggestion ? `<p><b>What to check:</b> ${html(d.explanation.suggestion)}</p>` : ""}
 <p><a href="${html(replayUrl)}" style="display:inline-block;padding:9px 14px;background:#17160f;color:#f6f5f1;border-radius:6px;text-decoration:none">Watch the replay</a></p>
-<p style="color:#6b685e;font-size:13px">You get this because email alerts are on in FlowGuard → Alerts.</p></div>`,
+<p style="color:#6b685e;font-size:13px">You get this because email alerts are on in Oluso → Alerts.</p></div>`,
     }),
     signal: AbortSignal.timeout(10_000),
   });

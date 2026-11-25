@@ -60,13 +60,13 @@ export default async function ReplayPage({ params }: { params: Promise<{ runId: 
       <PublicHeader />
       <main className="public-replay">
         <p className="public-note">
-          {data.source === "demo" ? "A sample failure, so you can see what a FlowGuard replay looks like." : "Someone shared this FlowGuard run with you. You can see this one run and nothing else from their account."}
+          {data.source === "demo" ? "A sample failure, so you can see what an Oluso replay looks like." : "Someone shared this Oluso run with you. You can see this one run and nothing else from their account."}
         </p>
         <ReplayView data={data} shareId={runId} mode="public" />
         <section className="cta-band" aria-labelledby="cta-h">
           <div>
             <h2 id="cta-h">Get a recording like this when your own site breaks</h2>
-            <p>FlowGuard opens your signup, login or checkout in a real browser every hour. Free while in beta, no card.</p>
+            <p>Oluso opens your signup, login or checkout in a real browser every hour. Free while in beta, no card.</p>
           </div>
           <Link className="btn accent lg" href={live ? "/flows/new" : "/signup"}>Monitor your own site free</Link>
         </section>

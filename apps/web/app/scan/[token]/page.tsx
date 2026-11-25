@@ -12,7 +12,7 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
   const s = await scan((await params).token);
   if (!s) return { title: "Scan not found", robots: { index: false } };
   const title = s.status === "done" ? `${s.host} scored ${s.score}/100` : `Scanning ${s.host}`;
-  return { title, description: `Free FlowGuard scan of ${s.host}: broken links, phone layout and JavaScript errors.`, robots: { index: false, follow: false } };
+  return { title, description: `Free Oluso scan of ${s.host}: broken links, phone layout and JavaScript errors.`, robots: { index: false, follow: false } };
 }
 
 export const dynamic = "force-dynamic";

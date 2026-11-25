@@ -3,7 +3,7 @@ import { BRAND } from "@/lib/brand";
 import { OG_SIZE, OgFrame, ogFonts } from "@/lib/og";
 import { getReplay } from "@/lib/replay";
 
-export const alt = "FlowGuard run replay";
+export const alt = "Oluso run replay";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 

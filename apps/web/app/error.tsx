@@ -12,7 +12,7 @@ export default function ErrorPage({ error, reset }: { error: Error & { digest?: 
       <p>It’s on our side, not yours. Your flows keep running on their schedule. Try again, and if it keeps happening, send us the code below.</p>
       <p className="state-actions">
         <button className="btn primary" onClick={reset}>Try again</button>
-        <Link className="btn ghost" href="/">Go to FlowGuard</Link>
+        <Link className="btn ghost" href="/">Go to Oluso</Link>
       </p>
       {error.digest && <p className="state-code">Error code: <code>{error.digest}</code></p>}
     </main>

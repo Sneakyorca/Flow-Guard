@@ -46,7 +46,7 @@ export function Wordmark({ beta = true }: { beta?: boolean }) {
   return (
     <span className="wordmark">
       <BrandMark />
-      FlowGuard{beta && <small>beta</small>}
+      Oluso{beta && <small>beta</small>}
     </span>
   );
 }
@@ -68,7 +68,7 @@ function Sidebar() {
     : `/replay/${DEMO_REPLAY_ID}`;
   return (
     <aside className="side" aria-label="Main">
-      <Link href="/monitors" aria-label="FlowGuard home"><Wordmark /></Link>
+      <Link href="/monitors" aria-label="Oluso home"><Wordmark /></Link>
       <Link className="ws" href="/settings">
         <span className="av" aria-hidden="true">{workspace.charAt(0).toUpperCase() || "W"}</span>
         <span><b>{workspace}</b><span>{plan}</span></span>

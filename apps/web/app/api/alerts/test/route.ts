@@ -16,7 +16,7 @@ export async function POST(req: Request) {
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text: "FlowGuard test: alerts for failed flows will appear in this channel. Nothing is broken." }),
+    body: JSON.stringify({ text: "Oluso test: alerts for failed flows will appear in this channel. Nothing is broken." }),
     signal: AbortSignal.timeout(8000),
   }).catch(() => null);
   if (!res) return NextResponse.json({ message: "Couldn’t reach Slack. Try again in a minute." }, { status: 502 });

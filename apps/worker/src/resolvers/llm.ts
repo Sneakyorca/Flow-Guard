@@ -8,7 +8,7 @@ import type { ResolveInput, Resolver } from "./types.js";
  * into { actions: [{ action, target_id, selector_or_coordinates, value, reasoning }] }.
  */
 
-export const SYSTEM_PROMPT = `You are the step resolver for FlowGuard, a browser test runner.
+export const SYSTEM_PROMPT = `You are the step resolver for Oluso, a browser test runner.
 You receive ONE plain-English test step and a list of visible page elements. Each element line starts with #<id>.
 Return JSON only, shaped exactly like:
 {"actions":[{"action":"click|fill|press|navigate|assert_text|assert_url","target_id":"<id or null>","selector_or_coordinates":null,"value":"<string or null>","reasoning":"<one short sentence>"}]}

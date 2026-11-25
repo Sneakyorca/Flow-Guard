@@ -13,7 +13,7 @@ export async function PublicHeader({ extra }: { extra?: { href: string; label: s
   const signedIn = supabaseConfigured && (await isSignedIn());
   return (
     <header className="landing-top">
-      <Link href="/" aria-label="FlowGuard home"><Wordmark beta={false} /></Link>
+      <Link href="/" aria-label="Oluso home"><Wordmark beta={false} /></Link>
       <nav style={{ display: "flex", gap: 8, flexWrap: "wrap", justifyContent: "flex-end" }}>
         {extra && <Link className="btn ghost" href={extra.href}>{extra.label}</Link>}
         {!supabaseConfigured ? (

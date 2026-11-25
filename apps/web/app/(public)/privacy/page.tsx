@@ -1,10 +1,10 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { LegalPage, Ph, type LegalSection } from "@/components/legal";
+import { LegalPage, OperatorEmail, OperatorName, OperatorPlace, type LegalSection } from "@/components/legal";
 
 export const metadata: Metadata = {
   title: "Privacy Policy",
-  description: "What FlowGuard collects, why, who processes it, how long it is kept, and your rights under the Nigeria Data Protection Act 2023 and the GDPR.",
+  description: "What Oluso collects, why, who processes it, how long it is kept, and your rights under the Nigeria Data Protection Act 2023 and the GDPR.",
 };
 
 // Template written in plain English. Not legal advice: see docs/legal/README.md before launch.
@@ -15,8 +15,8 @@ const sections: LegalSection[] = [
     title: "Who is responsible",
     body: (
       <>
-        <p><Ph>Company legal name</Ph>, <Ph>Registered address</Ph> (“we”) runs FlowGuard. Contact us about privacy at <Ph>Contact email</Ph>.</p>
-        <p>We are the <b>data controller</b> for your account information. For personal data that FlowGuard captures from the websites <i>you</i> ask it to test (see section 3), <b>you</b> are the controller and we act as your <b>processor</b>, processing it only to run FlowGuard for you.</p>
+        <p><OperatorName />, <OperatorPlace /> (“we”) runs Oluso. Contact us about privacy at <OperatorEmail />.</p>
+        <p>We are the <b>data controller</b> for your account information. For personal data that Oluso captures from the websites <i>you</i> ask it to test (see section 3), <b>you</b> are the controller and we act as your <b>processor</b>, processing it only to run Oluso for you.</p>
       </>
     ),
   },
@@ -35,7 +35,7 @@ const sections: LegalSection[] = [
   },
   {
     id: "captured",
-    title: "What FlowGuard records from websites you test",
+    title: "What Oluso records from websites you test",
     body: (
       <>
         <p>Each run opens the website you named and follows your steps. We store:</p>
@@ -59,7 +59,7 @@ const sections: LegalSection[] = [
           <tbody>
             <tr><td>Create and run your account; run your flows and scans; send alerts you set up</td><td>Performance of our contract with you</td></tr>
             <tr><td>Process data captured from sites you test</td><td>On your instructions, as your processor (your own lawful basis applies)</td></tr>
-            <tr><td>Keep FlowGuard secure, prevent abuse, fix problems</td><td>Legitimate interests (a working, safe service)</td></tr>
+            <tr><td>Keep Oluso secure, prevent abuse, fix problems</td><td>Legitimate interests (a working, safe service)</td></tr>
             <tr><td>Email you about important changes to the service or these policies</td><td>Contract and legitimate interests</td></tr>
             <tr><td>Comply with the law and respond to lawful requests</td><td>Legal obligation</td></tr>
           </tbody>
@@ -88,7 +88,7 @@ const sections: LegalSection[] = [
             </tbody>
           </table>
         </div>
-        <p><b>About the AI providers:</b> page outlines can include text shown on the tested page. We send them only to resolve your steps. While FlowGuard uses the free tier of the Gemini API, Google’s terms allow it to use that content to improve its products, including human review. Don’t put sensitive data in steps or test pages that display it. We will update this policy if we move to a paid tier with different terms.</p>
+        <p><b>About the AI providers:</b> page outlines can include text shown on the tested page. We send them only to resolve your steps. While Oluso uses the free tier of the Gemini API, Google’s terms allow it to use that content to improve its products, including human review. Don’t put sensitive data in steps or test pages that display it. We will update this policy if we move to a paid tier with different terms.</p>
       </>
     ),
   },
@@ -111,7 +111,7 @@ const sections: LegalSection[] = [
             <tr><td>Free scan reports and recordings</td><td>30 days</td></tr>
             <tr><td>Debug copies of runs on GitHub Actions</td><td>3 days</td></tr>
             <tr><td>Account, workspace and flows</td><td>Until you delete them or your account</td></tr>
-            <tr><td>Provider backups and logs</td><td>Up to <Ph>Backup retention, e.g. 30 days</Ph> after deletion, then overwritten</td></tr>
+            <tr><td>Provider backups and logs</td><td>Up to 7 days after deletion, then overwritten</td></tr>
           </tbody>
         </table>
       </div>
@@ -129,7 +129,7 @@ const sections: LegalSection[] = [
           <li>delete it. You can delete everything yourself in <b>Settings → Delete account</b>; it takes effect immediately;</li>
           <li>restrict or object to how we use it, and withdraw consent where we rely on consent.</li>
         </ul>
-        <p>Email <Ph>Contact email</Ph>. We reply within 30 days, and may ask you to confirm it’s you. If a request is about data captured from someone else’s website, we’ll pass it to the account holder who controls it and help them respond.</p>
+        <p>Email <OperatorEmail />. We reply within 30 days, and may ask you to confirm it’s you. If a request is about data captured from someone else’s website, we’ll pass it to the account holder who controls it and help them respond.</p>
         <p>You can complain to the <b>Nigeria Data Protection Commission</b> (ndpc.gov.ng), or, in the EU or UK, to your local data protection authority. We’d appreciate the chance to fix things first.</p>
       </>
     ),
@@ -142,7 +142,7 @@ const sections: LegalSection[] = [
   {
     id: "children",
     title: "Children",
-    body: <p>FlowGuard is for businesses and is not meant for anyone under 18. We don’t knowingly collect children’s data.</p>,
+    body: <p>Oluso is for businesses and is not meant for anyone under 18. We don’t knowingly collect children’s data.</p>,
   },
   {
     id: "changes",
@@ -158,7 +158,7 @@ export default function PrivacyPage() {
       other={{ href: "/terms", label: "Terms of Service" }}
       intro={
         <>
-          <p><b>The short version.</b> We keep your email and your flows so FlowGuard can run them. When it runs, it records the website you chose: a video, screenshots and error logs, which can include whatever that site shows. Passing-run recordings are deleted after 7 days, failures after 30. Steps and page outlines are sent to AI providers to work out what to click. Our database is in the EU. You can delete everything from Settings at any time.</p>
+          <p><b>The short version.</b> We keep your email and your flows so Oluso can run them. When it runs, it records the website you chose: a video, screenshots and error logs, which can include whatever that site shows. Passing-run recordings are deleted after 7 days, failures after 30. Steps and page outlines are sent to AI providers to work out what to click. Our database is in the EU. You can delete everything from Settings at any time.</p>
         </>
       }
       sections={sections}

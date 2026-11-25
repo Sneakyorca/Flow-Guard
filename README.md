@@ -1,9 +1,9 @@
-# FlowGuard
+# Oluso
 
-Uptime monitoring for user journeys.
+Uptime monitoring for user journeys. ("Oluso" is Yoruba for guardian. The project started as FlowGuard; the repo, package names and `FLOWGUARD_*` settings keep that name.)
 
 Describe a journey in plain English ("type `Buy milk` into the new todo input and press Enter",
-"click the Active filter"). FlowGuard runs it on a schedule in a headless Chromium browser,
+"click the Active filter"). Oluso runs it on a schedule in a headless Chromium browser,
 works out which element each step means, and when something breaks you get a video replay,
 the console and network errors, a Slack alert and a public link you can send to whoever has
 to fix it.
@@ -55,7 +55,7 @@ A run, step by step:
 
 ### When something goes wrong
 
-- **A step can't be done** (button covered, disabled, renamed): FlowGuard takes a fresh look at the page and re-resolves that step once, excluding the element that didn't work. Steps that pass this way are marked `healed`.
+- **A step can't be done** (button covered, disabled, renamed): Oluso takes a fresh look at the page and re-resolves that step once, excluding the element that didn't work. Steps that pass this way are marked `healed`.
 - **A run fails**: scheduled runs are re-run once before anyone is alerted. Fail-then-pass is recorded as **flaky** and not alerted; fail-then-fail is a real failure. The first attempt is kept under `attempt-1/`. (`--retries 1` does the same for the prototype.)
 - **Explaining it**: every failure is classified (site down, JavaScript error, server error, element missing, text never appeared, wrong page, element not usable) into one plain sentence with a suggested fix and the console/network evidence. That sentence leads the Slack alert and the replay page.
 - **Timeline**: a small JPEG is saved after every step (`steps/step-01.jpg`, …) alongside the video.

@@ -103,7 +103,7 @@ export function Builder({ initial }: { initial?: BuilderInitial }) {
         <div>
           <Link className="back" href={back}><Icon name="back" size={14} /> {initial ? initial.name : "Monitors"}</Link>
           <h1>{editing ? "Edit flow" : "New flow"}</h1>
-          <p>Write the journey the way you’d explain it to a new teammate, one action per step. FlowGuard opens the page and works out which button or field you mean.</p>
+          <p>Write the journey the way you’d explain it to a new teammate, one action per step. Oluso opens the page and works out which button or field you mean.</p>
         </div>
       </div>
       <form id="builder-form" onSubmit={onSubmit} className="builder">

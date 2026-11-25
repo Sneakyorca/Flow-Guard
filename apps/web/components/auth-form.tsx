@@ -73,7 +73,7 @@ export function AuthForm({ mode }: { mode: Mode }) {
       {!supabase && (
         <div className="notice" style={{ marginBottom: 16 }}>
           <Icon name="info" />
-          <span>Accounts aren’t switched on in this copy of FlowGuard (Supabase isn’t connected). You can still <Link className="link" href="/monitors">look around the sample workspace</Link>.</span>
+          <span>Accounts aren’t switched on in this copy of Oluso (Supabase isn’t connected). You can still <Link className="link" href="/monitors">look around the sample workspace</Link>.</span>
         </div>
       )}
       <form onSubmit={onSubmit}>

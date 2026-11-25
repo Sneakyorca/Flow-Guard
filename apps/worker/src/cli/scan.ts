@@ -22,7 +22,7 @@ async function main() {
   const outDir = path.join(runsDir(), scanId);
   const budgetMs = (typeof args.budget === "string" ? Number(args.budget) : 60) * 1000;
   const maxPages = typeof args.pages === "string" ? Number(args.pages) : 15;
-  console.log(`FlowGuard free scan · ${scanId} · ${args.url} · budget ${budgetMs / 1000}s`);
+  console.log(`Oluso free scan · ${scanId} · ${args.url} · budget ${budgetMs / 1000}s`);
   const r = await scanSite({ scanId, url: args.url, outDir, budgetMs, maxPages, checkExternal: args.external === true, log: (m) => console.log(`  ${m}`) });
   console.log("");
   console.log(`Score ${r.score}/100 — ${r.summary} (${(r.duration_ms / 1000).toFixed(1)}s)`);

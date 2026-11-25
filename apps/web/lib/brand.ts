@@ -1,8 +1,8 @@
 /** Brand constants shared by icons, the web manifest and Open Graph images. */
 export const BRAND = {
-  name: "FlowGuard",
+  name: "Oluso",
   tagline: "Is your checkout working right now?",
-  description: "FlowGuard runs your signup, login and checkout in a real browser every hour and sends you the recording when something breaks.",
+  description: "Oluso runs your signup, login and checkout in a real browser every hour and sends you the recording when something breaks.",
   paper: "#f6f5f1",
   ink: "#17160f",
   muted: "#6b685e",

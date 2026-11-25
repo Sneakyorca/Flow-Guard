@@ -53,7 +53,7 @@ export function MonitorsView() {
         </div>
         <section className="panel empty-start">
           <h2>Start with the journey that costs you most when it breaks</h2>
-          <p>For a shop that’s usually checkout. For an app, signup. Write it the way you’d explain it to a new teammate, one action per step. FlowGuard opens the page every hour and works out which button or field you mean.</p>
+          <p>For a shop that’s usually checkout. For an app, signup. Write it the way you’d explain it to a new teammate, one action per step. Oluso opens the page every hour and works out which button or field you mean.</p>
           <Link className="btn primary" href="/flows/new"><Icon name="plus" /> Add your first flow</Link>
           <p className="muted" style={{ fontSize: 13, marginTop: 14 }}>Not sure what’s broken? <Link className="link" href="/">Run the free scan</Link> on your site first.</p>
         </section>

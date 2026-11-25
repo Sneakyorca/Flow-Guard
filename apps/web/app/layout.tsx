@@ -8,12 +8,12 @@ import { BRAND, siteUrl } from "@/lib/brand";
 
 export const metadata: Metadata = {
   metadataBase: siteUrl(),
-  applicationName: "FlowGuard",
-  title: { default: "FlowGuard: is your checkout working right now?", template: "%s · FlowGuard" },
+  applicationName: "Oluso",
+  title: { default: "Oluso: is your checkout working right now?", template: "%s · Oluso" },
   description: BRAND.description,
-  openGraph: { siteName: "FlowGuard", type: "website", locale: "en_GB", title: "FlowGuard: is your checkout working right now?", description: BRAND.description },
-  twitter: { card: "summary_large_image", title: "FlowGuard: is your checkout working right now?", description: BRAND.description },
-  appleWebApp: { title: "FlowGuard", statusBarStyle: "default" },
+  openGraph: { siteName: "Oluso", type: "website", locale: "en_GB", title: "Oluso: is your checkout working right now?", description: BRAND.description },
+  twitter: { card: "summary_large_image", title: "Oluso: is your checkout working right now?", description: BRAND.description },
+  appleWebApp: { title: "Oluso", statusBarStyle: "default" },
   formatDetection: { telephone: false },
 };
 

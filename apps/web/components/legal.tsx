@@ -1,5 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
+import { OPERATOR } from "@/lib/operator";
 import { PublicHeader } from "./public-header";
 import { LandingFooter } from "./scanner";
 
@@ -10,6 +11,12 @@ export function Ph({ children }: { children: ReactNode }) {
   return <mark className="ph">[{children}]</mark>;
 }
 
+// Operator details from lib/operator.ts, or a placeholder while they're empty.
+export const OperatorName = () => (OPERATOR.name ? <>{OPERATOR.name}</> : <Ph>Your full name (trading as Oluso)</Ph>);
+export const OperatorPlace = () => (OPERATOR.place ? <>{OPERATOR.place}</> : <Ph>City, country</Ph>);
+export const OperatorEmail = () =>
+  OPERATOR.email ? <a className="link" href={`mailto:${OPERATOR.email}`}>{OPERATOR.email}</a> : <Ph>Contact email</Ph>;
+
 /** Plain page for /terms and /privacy: wordmark, contents list, sections, footer. */
 export function LegalPage({ title, intro, sections, other }: { title: string; intro: ReactNode; sections: LegalSection[]; other: { href: string; label: string } }) {
   return (
@@ -17,7 +24,7 @@ export function LegalPage({ title, intro, sections, other }: { title: string; in
       <PublicHeader extra={other} />
       <main className="legal">
         <h1>{title}</h1>
-        <p className="legal-meta">Effective <Ph>Effective date</Ph> · Last updated <Ph>Effective date</Ph></p>
+        <p className="legal-meta">Effective 25 November 2026 · Last updated 25 November 2026</p>
         <div className="legal-intro">{intro}</div>
         <nav className="legal-toc" aria-label="Contents">
           <b>Contents</b>

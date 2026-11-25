@@ -11,7 +11,7 @@ export default function NotFound() {
       <h1>There’s no page here</h1>
       <p>The address may be mistyped, or the page was moved. Nothing is broken on your account.</p>
       <p className="state-actions">
-        <Link className="btn primary" href="/">Go to FlowGuard</Link>
+        <Link className="btn primary" href="/">Go to Oluso</Link>
         <Link className="btn ghost" href="/monitors">Your monitors</Link>
       </p>
     </main>

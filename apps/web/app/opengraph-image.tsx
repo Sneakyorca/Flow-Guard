@@ -2,7 +2,7 @@ import { ImageResponse } from "next/og";
 import { BRAND } from "@/lib/brand";
 import { OG_SIZE, OgFrame, ogFonts } from "@/lib/og";
 
-export const alt = "FlowGuard: is your checkout working right now?";
+export const alt = "Oluso: is your checkout working right now?";
 export const size = OG_SIZE;
 export const contentType = "image/png";
 

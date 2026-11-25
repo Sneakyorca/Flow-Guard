@@ -3,8 +3,8 @@ import { BRAND } from "@/lib/brand";
 
 export default function manifest(): MetadataRoute.Manifest {
   return {
-    name: "FlowGuard",
-    short_name: "FlowGuard",
+    name: "Oluso",
+    short_name: "Oluso",
     description: BRAND.description,
     start_url: "/monitors",
     display: "standalone",

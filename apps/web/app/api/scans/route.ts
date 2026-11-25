@@ -21,7 +21,7 @@ function clientIp(req: Request): string {
  */
 export async function POST(req: Request) {
   const admin = getSupabaseAdmin();
-  if (!admin) return NextResponse.json({ message: "Scans from the website aren’t switched on in this copy of FlowGuard yet." }, { status: 501 });
+  if (!admin) return NextResponse.json({ message: "Scans from the website aren’t switched on in this copy of Oluso yet." }, { status: 501 });
 
   const { url } = (await req.json().catch(() => ({}))) as { url?: string };
   const checked = checkScanUrl(String(url ?? "").slice(0, 2000));

@@ -3,7 +3,7 @@ import { dispatchWorkflow } from "@/lib/github-dispatch";
 import { getSupabaseServer } from "@/lib/supabase/server";
 
 /**
- * "Run now" for one flow. FlowGuard's browser runs happen on GitHub Actions (free), so this
+ * "Run now" for one flow. Oluso's browser runs happen on GitHub Actions (free), so this
  * starts the `scheduled-runs.yml` workflow with `flow_id` set. Results land in Monitors when
  * the run finishes, usually within 2–3 minutes.
  *

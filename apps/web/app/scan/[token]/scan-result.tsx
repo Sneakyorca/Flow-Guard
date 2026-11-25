@@ -104,7 +104,7 @@ export function ScanResult({ scan }: { scan: PublicScan }) {
       )}
       <section className="cta-band">
         <div>
-          <h2>A scan checks pages. FlowGuard checks the journey.</h2>
+          <h2>A scan checks pages. Oluso checks the journey.</h2>
           <p>Describe your checkout or signup in plain sentences and we’ll click through it every hour, with a video when it breaks.</p>
         </div>
         <Link className="btn accent lg" href="/signup">Monitor your checkout free</Link>

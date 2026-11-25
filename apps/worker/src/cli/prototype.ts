@@ -38,7 +38,7 @@ async function main() {
   const runId = newRunId();
   const outDir = path.join(runsDir(), runId);
 
-  console.log(`FlowGuard prototype · run ${runId}`);
+  console.log(`Oluso prototype · run ${runId}`);
   console.log(`url=${url} viewport=${viewport} resolver=${resolver.name} steps=${steps.length}`);
   const d = await runFlowConfirmed({ runId, startUrl: url, steps, viewport, resolver, outDir, stepTimeoutMs: typeof args.timeout === "string" ? Number(args.timeout) * 1000 : undefined, log: (m) => console.log(m) }, typeof args.retries === "string" ? Number(args.retries) : 0);
 

@@ -20,7 +20,7 @@ export function isNoiseRequestFailure(req: Request, failure: string): boolean {
   // Media, analytics beacons and pings get cut off whenever the page navigates.
   if (["media", "ping", "beacon"].includes(req.resourceType())) return true;
   // Link prefetches (Next.js RSC `?_rsc=`, <link rel=prefetch>, speculation rules) are
-  // cancelled when the user (or FlowGuard) navigates before they finish.
+  // cancelled when the user (or Oluso) navigates before they finish.
   const h = req.headers();
   if (/[?&]_rsc=/.test(req.url()) || h["next-router-prefetch"] || h["rsc"] || /prefetch/i.test(h["sec-purpose"] ?? h["purpose"] ?? "")) return true;
   return false;

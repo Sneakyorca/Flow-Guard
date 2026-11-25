@@ -57,7 +57,7 @@ export function explainFailure(d: Omit<RunDiagnostics, "explanation">): FailureE
   }
   if (/Expected text/.test(err)) {
     const m = err.match(/Expected text "([^"]+)"/);
-    return make("text_missing", `“${m?.[1] ?? "The expected text"}” never appeared`, `At ${stepLabel}, FlowGuard waited for this text but the page never showed it.`, "Either the previous action didn't do what it should (look at the step screenshot), or the wording on the page changed.");
+    return make("text_missing", `“${m?.[1] ?? "The expected text"}” never appeared`, `At ${stepLabel}, Oluso waited for this text but the page never showed it.`, "Either the previous action didn't do what it should (look at the step screenshot), or the wording on the page changed.");
   }
   if (/Expected URL/.test(err)) {
     return make("wrong_page", "Ended up on the wrong page", firstClause(err), "A link or redirect may have changed. Watch the replay to see where the browser went.");
