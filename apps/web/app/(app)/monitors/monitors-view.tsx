@@ -1,16 +1,20 @@
 "use client";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { demoActivity, DEMO_REPLAY_ID, type Status } from "@/lib/demo-data";
-import { Button, Icon, StatusLabel, StepIcon, Uptime } from "@/components/ui";
+import { useMemo, useState } from "react";
+import { demoActivity, demoCharts, demoDays, DEMO_REPLAY_ID, type Status } from "@/lib/demo-data";
+import { formatMs, formatRate, RANGES, totals, type RangeKey } from "@/lib/runs-data";
+import { Button, Icon, StatusLabel, StepIcon } from "@/components/ui";
+import { ChartLegend, DayStrip, DurationChart, RunsChart } from "@/components/charts";
 import { useToast } from "@/components/toast";
 import { touchFlow, useFlows } from "@/components/flows-store";
 import { useLive } from "@/components/live-data";
+import { useRunTracker } from "@/components/run-tracker";
 
 const REPLAY = `/replay/${DEMO_REPLAY_ID}`;
 const FILTERS: Array<[string, string]> = [["all", "All"], ["failed", "Failing"], ["warning", "Slow"], ["passing", "Passing"]];
-const UPTIME: Record<Status, string> = { passing: "100%", failed: "96.7%", warning: "99.2%", pending: "–" };
+const RANGE_KEYS: RangeKey[] = ["24h", "7d", "30d"];
+const START_LABEL: Record<RangeKey, string> = { "24h": "24 hours ago", "7d": "7 days ago", "30d": "30 days ago" };
 
 export function MonitorsView() {
   const router = useRouter();
@@ -18,29 +22,21 @@ export function MonitorsView() {
   const flows = useFlows();
   const [filter, setFilter] = useState("all");
   const [search, setSearch] = useState("");
-  const [running, setRunning] = useState<string[]>([]);
-  const [range, setRange] = useState("24");
+  const [demoRunning, setDemoRunning] = useState<string[]>([]);
+  const [range, setRange] = useState<RangeKey>("24h");
   const [showAll, setShowAll] = useState(false);
 
   const live = useLive();
-  const replayOf = (f: { replayToken?: string }) => (f.replayToken ? `/replay/${f.replayToken}` : REPLAY);
+  const tracker = useRunTracker();
+  const charts = useMemo(() => live?.charts ?? demoCharts(flows), [live, flows]);
+  const isRunning = (id: string) => (live ? tracker.running(id) : demoRunning.includes(id));
 
   const run = async (id: string, name: string) => {
-    setRunning((r) => [...r, id]);
-    if (live) {
-      // Real mode: ask the server to start a GitHub Actions run for just this flow.
-      try {
-        const res = await fetch(`/api/flows/${id}/run`, { method: "POST" });
-        const body = (await res.json().catch(() => ({}))) as { message?: string };
-        notify(body.message ?? (res.ok ? `“${name}” is queued.` : `Couldn’t start “${name}”.`));
-      } catch {
-        notify(`Couldn’t reach the server to start “${name}”.`);
-      }
-      setRunning((r) => r.filter((n) => n !== id));
-      return;
-    }
+    // Real mode: start a GitHub Actions run and watch for its result (see run-tracker.tsx).
+    if (live) return tracker.start(id, name);
+    setDemoRunning((r) => [...r, id]);
     window.setTimeout(() => {
-      setRunning((r) => r.filter((n) => n !== id));
+      setDemoRunning((r) => r.filter((n) => n !== id));
       touchFlow(id);
       notify(`Sample run of “${name}” finished. In demo mode no site is visited.`);
     }, 1400);
@@ -76,10 +72,8 @@ export function MonitorsView() {
     .sort((a, b) => ["failed", "warning", "passing"].indexOf(a.status) - ["failed", "warning", "passing"].indexOf(b.status));
   const limit = showAll || search || filter !== "all" ? matches.length : 6;
   const failingFlow = flows.find((f) => f.status === "failed");
-  const s = live?.stats;
-  const pct = (a: number, b: number) => (b ? `${(Math.round((a / b) * 1000) / 10).toString()}%` : "–");
-  const passRate = s ? (range === "24" ? pct(s.passed24h, s.total24h) : pct(s.passed7d, s.total7d)) : range === "24" ? "98.4%" : "99.1%";
-  const passOf = s ? (range === "24" ? `${s.passed24h} of ${s.total24h}` : `${s.passed7d} of ${s.total7d}`) : range === "24" ? "283 of 288" : "2,004 of 2,016";
+  const buckets = charts[range];
+  const t = totals(buckets);
   const activity = live
     ? live.activity
     : demoActivity.map((a) => ({ ...a, href: a.status === "failed" ? REPLAY : "" }));
@@ -101,24 +95,37 @@ export function MonitorsView() {
         <Link className="btn primary" href="/flows/new"><Icon name="plus" /> New flow</Link>
       </div>
 
-      <dl className="summary">
-        <div><dt>Failing now</dt><dd className={failed ? "t-bad" : ""}>{failed}<small>of {flows.length}</small></dd></div>
-        <div><dt>Slow</dt><dd className={warning ? "t-warn" : ""}>{warning}<small>over 3s</small></dd></div>
-        <div><dt>Runs passed, {range === "24" ? "24h" : "7 days"}</dt><dd>{passRate}<small>{passOf}</small></dd></div>
-        {s
-          ? <div><dt>Median run time, 7 days</dt><dd>{s.medianMs === null ? "–" : `${(s.medianMs / 1000).toFixed(1)}s`}</dd></div>
-          : <div><dt>Median run time</dt><dd>4.2s<small>was 4.8s</small></dd></div>}
-      </dl>
-      <div className="summary-foot">
-        <span>{passing} passing · {s ? `${s.failuresThisWeek} failed run${s.failuresThisWeek === 1 ? "" : "s"} this week` : "3 regressions caught this week"}</span>
-        <label>
-          <span className="sr-only">Time range</span>
-          <select value={range} onChange={(e) => setRange(e.target.value)}>
-            <option value="24">Last 24 hours</option>
-            <option value="168">Last 7 days</option>
-          </select>
-        </label>
-      </div>
+      <section className="panel health" aria-labelledby="health-h">
+        <div className="panel-head">
+          <h2 id="health-h">All flows, {RANGES[range].long}</h2>
+          <div className="seg" role="group" aria-label="Time range">
+            {RANGE_KEYS.map((k) => <button key={k} aria-pressed={range === k} onClick={() => setRange(k)}>{RANGES[k].label}</button>)}
+          </div>
+        </div>
+        <div className="health-grid">
+          <div>
+            <div className="stat">
+              <span className="stat-label">Runs passed</span>
+              <span className="stat-value num">{formatRate(t.rate)}</span>
+              <span className="stat-sub num">{t.runs ? `${t.passed} of ${t.runs} runs${t.fail ? ` · ${t.fail} failed` : ""}${t.flaky ? ` · ${t.flaky} flaky` : ""}` : "no runs yet"}</span>
+            </div>
+            <RunsChart buckets={buckets} size={RANGES[range].size} label={`Runs per ${range === "30d" ? "day" : range === "7d" ? "6 hours" : "hour"}, ${RANGES[range].long}`} startLabel={START_LABEL[range]} />
+            <ChartLegend />
+          </div>
+          <div>
+            <div className="stat">
+              <span className="stat-label">Median run time</span>
+              <span className="stat-value num">{formatMs(t.medianMs)}</span>
+              <span className="stat-sub">start page to last step, all flows</span>
+            </div>
+            <DurationChart buckets={buckets} size={RANGES[range].size} label={`Median run time, ${RANGES[range].long}`} startLabel={START_LABEL[range]} />
+          </div>
+        </div>
+        <div className="health-foot">
+          <span><b className={failed ? "t-bad" : ""}>{failed} failing</b> · {warning} {live ? "flaky" : "slow"} · {passing} passing{live ? "" : " · sample data"}</span>
+          {live && <span>Updates every minute while this tab is open</span>}
+        </div>
+      </section>
 
       {failingFlow && (
         <div className="alert-row" role="alert">
@@ -127,7 +134,7 @@ export function MonitorsView() {
             <b>{failingFlow.name} is failing</b>
             <p>{live ? `${failingFlow.detail} On ${failingFlow.domain}, ${failingFlow.time}.` : `Step 4 (“Pay Now”) threw a JavaScript error on ${failingFlow.domain}, ${failingFlow.time}. Customers can’t pay.`}</p>
           </div>
-          <Link className="btn" href={replayOf(failingFlow)}>Watch the replay <Icon name="arrow" /></Link>
+          <Link className="btn" href={failingFlow.replayToken ? `/replay/${failingFlow.replayToken}` : REPLAY}>Watch the replay <Icon name="arrow" /></Link>
         </div>
       )}
 
@@ -153,29 +160,35 @@ export function MonitorsView() {
             </tr>
           </thead>
           <tbody>
-            {matches.slice(0, limit).map((f) => (
-              <tr key={f.id} className={f.status === "failed" ? "is-failed" : ""}>
-                <td>
-                  <button className="flow-name" onClick={() => (f.status === "failed" || (live && f.replayToken) ? router.push(replayOf(f)) : notify(f.status === "pending" ? `${f.name}: ${f.detail}` : `${f.name}: ${f.detail} Took ${f.duration.toFixed(1)}s.`))}>{f.name}</button>
-                  <div className="flow-sub"><span className="mobile-only"><StatusLabel status={f.status} text={f.statusText} /> · </span><span className="mono">{f.domain}</span> · {f.schedule.toLowerCase()}</div>
-                </td>
-                <td className="col-uptime">
-                  <div className="uptime-pct"><span className="num">{f.uptime ?? UPTIME[f.status]}</span></div>
-                  <Uptime status={f.status} history={f.history} />
-                </td>
-                <td className="col-last">
-                  <StatusLabel status={f.status} text={f.statusText} />
-                  <div className="flow-sub num">
-                    {f.lastRunLabel ?? (f.status === "passing" ? `${f.time}, ${f.duration.toFixed(1)}s` : f.status === "failed" ? `${f.time}, at step 4` : `${f.time}, API took 4.9s`)}
-                  </div>
-                </td>
-                <td style={{ textAlign: "right" }}>
-                  <Button size="sm" disabled={running.includes(f.id)} onClick={() => run(f.id, f.name)} label={`Run ${f.name} now`}>
-                    <Icon name={running.includes(f.id) ? "refresh" : "play"} size={14} />{running.includes(f.id) ? "Running…" : "Run"}
-                  </Button>
-                </td>
-              </tr>
-            ))}
+            {matches.slice(0, limit).map((f) => {
+              const days = f.days ?? demoDays(f);
+              const ran = days.reduce((n, b) => n + b.pass + b.fail + b.flaky, 0);
+              const ok = days.reduce((n, b) => n + b.pass + b.flaky, 0);
+              const busy = isRunning(f.id);
+              return (
+                <tr key={f.id} className={f.status === "failed" ? "is-failed" : ""}>
+                  <td>
+                    <Link className="flow-name" href={`/flows/${f.id}`}>{f.name}</Link>
+                    <div className="flow-sub"><span className="mobile-only"><StatusLabel status={f.status} text={f.statusText} /> · </span><span className="mono">{f.domain}</span> · {f.schedule.toLowerCase()}</div>
+                  </td>
+                  <td className="col-uptime">
+                    <div className="uptime-pct"><span className="num">{ran ? formatRate(ok / ran) : "–"}</span><span className="num">{ran ? `${ran} runs` : ""}</span></div>
+                    <DayStrip buckets={days} label={f.name} />
+                  </td>
+                  <td className="col-last">
+                    {busy ? <span className="status pending"><span className="d pulse" aria-hidden="true" />Running…</span> : <StatusLabel status={f.status} text={f.statusText} />}
+                    <div className="flow-sub num">
+                      {busy ? "on GitHub Actions, usually 2–3 min" : f.lastRunLabel ?? (f.status === "passing" ? `${f.time}, ${f.duration.toFixed(1)}s` : f.status === "failed" ? `${f.time}, at step 4` : `${f.time}, API took 4.9s`)}
+                    </div>
+                  </td>
+                  <td style={{ textAlign: "right" }}>
+                    <Button size="sm" disabled={busy} onClick={() => run(f.id, f.name)} label={`Run ${f.name} now`}>
+                      <Icon name={busy ? "refresh" : "play"} size={14} className={busy ? "spin" : undefined} />{busy ? "Running…" : "Run"}
+                    </Button>
+                  </td>
+                </tr>
+              );
+            })}
             {matches.length === 0 && (
               <tr><td colSpan={4} className="muted" style={{ padding: 24 }}>No flows match “{search}”. Try a site name like <span className="mono">shopkemi.com</span>.</td></tr>
             )}

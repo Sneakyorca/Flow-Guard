@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { DayResult, Status } from "@/lib/demo-data";
+import type { Status } from "@/lib/demo-data";
 
 const paths: Record<string, ReactNode> = {
   mark: <><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" /><path d="M8 12.5h3l1.5-3 2 6 1.5-3h0" /></>,
@@ -59,26 +59,4 @@ export function StepIcon({ status }: { status: "passed" | "failed" | "skipped" |
   if (status === "failed") return <Icon name="x-circle" className="t-bad" />;
   if (status === "warning") return <Icon name="alert-circle" className="t-warn" />;
   return <Icon name="minus" className="faint" />;
-}
-
-/** 30 days of daily results, oldest first. Real `history` when given, otherwise a demo pattern per status. */
-export function Uptime({ status, days = 30, history }: { status: Status; days?: number; history?: DayResult[] }) {
-  if (history) {
-    const failingDays = history.filter((d) => d === "bad").length;
-    const ran = history.filter((d) => d !== "none").length;
-    const label = ran === 0 ? "No runs in the last 30 days" : `Last ${history.length} days: ${failingDays ? `${failingDays} days with failures` : "no failures"}`;
-    return (
-      <div className="uptime" role="img" aria-label={label}>
-        {history.map((d, i) => <i key={i} className={d === "ok" ? "" : d} />)}
-      </div>
-    );
-  }
-  const bad = (i: number) => status === "failed" && (i === 11 || i >= days - 1);
-  const warn = (i: number) => status === "warning" && (i === 19 || i === 26);
-  const failing = Array.from({ length: days }, (_, i) => bad(i)).filter(Boolean).length;
-  return (
-    <div className="uptime" role="img" aria-label={`Last ${days} days: ${failing ? `${failing} days with failures` : "no failures"}`}>
-      {Array.from({ length: days }, (_, i) => <i key={i} className={bad(i) ? "bad" : warn(i) ? "warn" : ""} />)}
-    </div>
-  );
 }

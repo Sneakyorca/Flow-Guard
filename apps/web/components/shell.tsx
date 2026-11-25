@@ -1,10 +1,11 @@
 "use client";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import type { ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { demoUser, DEMO_REPLAY_ID } from "@/lib/demo-data";
 import { Icon } from "./ui";
 import { ToastProvider } from "./toast";
+import { RunTrackerProvider } from "./run-tracker";
 import { useWorkspaceName } from "./workspace";
 import { useFlows } from "./flows-store";
 import { LiveDataProvider, useLive } from "./live-data";
@@ -20,6 +21,7 @@ const NAV = [
 
 const TITLES: Array<[string, string]> = [
   ["/flows/new", "New flow"],
+  ["/flows/", "Flow"],
   ["/replay", "Failure replay"],
   ["/scan", "Public scans"],
   ["/alerts", "Alerts"],
@@ -98,11 +100,45 @@ function Topbar() {
   return (
     <header className="topbar">
       <div className="crumbs"><span>{workspace}</span><span aria-hidden="true">/</span><b>{title}</b></div>
-      <div className="runner-status" title="Scheduled runs come from GitHub Actions">
-        <span className="status passing"><span className="d" aria-hidden="true" /></span>
-        <span>Runner healthy · next run at :07</span>
-      </div>
+      <RunnerStatus />
     </header>
+  );
+}
+
+/** Last run and the next scheduled check (GitHub Actions cron runs at minute 7 of every hour). */
+function RunnerStatus() {
+  const live = useLive();
+  const [now, setNow] = useState<number | null>(null);
+  useEffect(() => {
+    setNow(Date.now());
+    const id = window.setInterval(() => setNow(Date.now()), 30_000);
+    return () => window.clearInterval(id);
+  }, []);
+  if (!live) {
+    return (
+      <div className="runner-status" title="Sample workspace">
+        <span className="status passing"><span className="d" aria-hidden="true" /></span>
+        <span>Sample data · runs hourly at :07</span>
+      </div>
+    );
+  }
+  const last = Object.values(live.latestRun).reduce<number | null>((m, r) => (r ? Math.max(m ?? 0, Date.parse(r.startedAt)) : m), null);
+  if (now === null) return <div className="runner-status" />;
+  const next = new Date(now);
+  next.setUTCMinutes(7, 0, 0);
+  if (next.getTime() <= now) next.setUTCHours(next.getUTCHours() + 1);
+  const nextLabel = next.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const ago = last === null ? null : Math.max(0, Math.round((now - last) / 60_000));
+  // Hourly runs: more than ~2 hours without any run means the scheduler probably isn't running.
+  const stale = last !== null && live.flows.some((f) => f.schedule !== "Paused") && now - last > 2.5 * 3_600_000;
+  return (
+    <div className="runner-status" title="Scheduled runs come from GitHub Actions, hourly at minute 7. GitHub can start them a few minutes late.">
+      <span className={`status ${last === null ? "pending" : stale ? "warning" : "passing"}`}><span className="d" aria-hidden="true" /></span>
+      <span>
+        {last === null ? "No runs yet" : `Last run ${ago! < 1 ? "just now" : ago! < 60 ? `${ago}m ago` : ago! < 1440 ? `${Math.floor(ago! / 60)}h ago` : `${Math.floor(ago! / 1440)}d ago`}`}
+        {stale ? " (late)" : ""} · next check about {nextLabel}
+      </span>
+    </div>
   );
 }
 
@@ -110,6 +146,7 @@ export function AppShell({ children, live = null }: { children: ReactNode; live?
   return (
     <LiveDataProvider value={live}>
     <ToastProvider>
+    <RunTrackerProvider>
       <a href="#content" className="sr-only">Skip to content</a>
       <div className="shell">
         <Sidebar />
@@ -118,6 +155,7 @@ export function AppShell({ children, live = null }: { children: ReactNode; live?
           <main id="content" className="content">{children}</main>
         </div>
       </div>
+    </RunTrackerProvider>
     </ToastProvider>
     </LiveDataProvider>
   );

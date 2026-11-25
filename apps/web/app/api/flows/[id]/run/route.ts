@@ -26,7 +26,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   const repo = process.env.GITHUB_REPO || "Sneakyorca/Flow-Guard";
   if (!token) {
     return NextResponse.json(
-      { message: `Run now isn’t switched on yet (GITHUB_DISPATCH_TOKEN is missing). “${flow.name}” still runs on its hourly schedule.` },
+      { message: `“Run now” isn’t set up on this server yet (GITHUB_DISPATCH_TOKEN is missing), so nothing was started. Scheduled runs are unaffected by this setting.` },
       { status: 501 },
     );
   }
@@ -46,5 +46,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     console.error(`[run-now] GitHub dispatch failed: ${res.status} ${detail.slice(0, 300)}`);
     return NextResponse.json({ message: `GitHub refused to start the run (${res.status}). Check the token’s repo access and Actions permission.` }, { status: 502 });
   }
-  return NextResponse.json({ message: `“${flow.name}” is starting on GitHub Actions. Results appear here in about 2–3 minutes; refresh to see them.` }, { status: 202 });
+  return NextResponse.json({ message: `“${flow.name}” is starting on GitHub Actions. The result usually lands in 2–3 minutes; this page updates by itself.` }, { status: 202 });
 }

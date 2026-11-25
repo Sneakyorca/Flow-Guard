@@ -46,3 +46,13 @@ export function touchFlow(id: string, time = "Just now") {
   flows = flows.map((f) => (f.id === id ? { ...f, time } : f));
   emit();
 }
+
+export function updateFlow(id: string, patch: Partial<DemoFlow>) {
+  flows = flows.map((f) => (f.id === id ? { ...f, ...patch } : f));
+  emit();
+}
+
+export function removeFlow(id: string) {
+  flows = flows.filter((f) => f.id !== id);
+  emit();
+}

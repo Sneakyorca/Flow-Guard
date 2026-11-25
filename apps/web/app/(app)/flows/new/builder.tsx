@@ -3,71 +3,110 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { demoBuilderSteps } from "@/lib/demo-data";
+import { SCHEDULES } from "@/lib/flow-detail";
 import { getSupabaseBrowser } from "@/lib/supabase/client";
 import { Button, Icon } from "@/components/ui";
 import { useToast } from "@/components/toast";
-import { addFlow } from "@/components/flows-store";
+import { addFlow, updateFlow } from "@/components/flows-store";
+import { useLive } from "@/components/live-data";
+import { useRunTracker } from "@/components/run-tracker";
 
-const SCHEDULES: Array<[string, string]> = [["Every 1 hour", "0 * * * *"], ["Every 6 hours", "0 */6 * * *"], ["Daily", "0 6 * * *"]];
-const ALERTS = [
-  { id: "slack", label: "Post to Slack", hint: "One message per confirmed failure", on: false },
-  { id: "email", label: "Email me", hint: "To the workspace owner", on: true },
-  { id: "share", label: "Make the replay link public", hint: "Anyone with the link can watch it", on: true },
-];
+/** Existing flow being edited; absent for a new flow. */
+export interface BuilderInitial {
+  id: string;
+  name: string;
+  url: string;
+  viewport: "desktop" | "mobile";
+  scheduleCron: string | null;
+  steps: string[];
+  source: "live" | "demo";
+}
 
-export function Builder() {
+export function Builder({ initial }: { initial?: BuilderInitial }) {
   const router = useRouter();
   const notify = useToast();
-  const [flowName, setFlowName] = useState("");
-  const [url, setUrl] = useState("https://example.com");
-  const [device, setDevice] = useState("Desktop");
-  const [schedule, setSchedule] = useState(SCHEDULES[0][0]);
-  const [steps, setSteps] = useState(demoBuilderSteps);
+  const live = useLive();
+  const tracker = useRunTracker();
+  const editing = Boolean(initial);
+  const [flowName, setFlowName] = useState(initial?.name ?? "");
+  const [url, setUrl] = useState(initial?.url ?? "https://example.com");
+  const [device, setDevice] = useState(initial?.viewport === "mobile" ? "Mobile" : "Desktop");
+  const [schedule, setSchedule] = useState(SCHEDULES.find(([, c]) => c === initial?.scheduleCron)?.[0] ?? SCHEDULES[0][0]);
+  const [steps, setSteps] = useState(initial?.steps.length ? initial.steps : demoBuilderSteps);
   const [tested, setTested] = useState(false);
   const [saving, setSaving] = useState(false);
+  const back = initial ? `/flows/${initial.id}` : "/monitors";
 
   const edit = (fn: (s: string[]) => string[]) => { setSteps(fn); setTested(false); };
 
-  async function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
+  /** Save (insert or update). Returns the flow id, or null on failure. */
+  async function save(): Promise<string | null> {
     const domain = new URL(url).hostname;
     const supabase = getSupabaseBrowser();
-    if (supabase) {
-      // Live mode: insert into the signed-in user's workspace (RLS enforces ownership).
+    const row = {
+      name: flowName.trim(),
+      start_url: url,
+      viewport: device === "Mobile" ? "mobile" : "desktop",
+      schedule_cron: SCHEDULES.find(([l]) => l === schedule)?.[1] ?? "0 * * * *",
+      steps_json: steps.filter((s) => s.trim()).map((instruction) => ({ instruction: instruction.trim() })),
+    };
+    if (supabase && live) {
+      // Live mode: RLS makes sure the flow belongs to the signed-in user's workspace.
       setSaving(true);
-      const { data: ws } = await supabase.from("workspaces").select("id").limit(1).maybeSingle();
-      if (ws) {
-        const { error } = await supabase.from("flows").insert({
-          workspace_id: ws.id,
-          name: flowName,
-          start_url: url,
-          viewport: device === "Mobile" ? "mobile" : "desktop",
-          schedule_cron: SCHEDULES.find(([l]) => l === schedule)?.[1] ?? "0 * * * *",
-          steps_json: steps.filter((s) => s.trim()).map((instruction) => ({ instruction })),
-        });
+      if (initial) {
+        const { error } = await supabase.from("flows").update(row).eq("id", initial.id);
         setSaving(false);
-        if (error) return notify(`Couldn’t save the flow: ${error.message}`);
-        notify("Saved. It runs at the next hourly check, or press Run on Monitors to start it now.");
-        router.push("/monitors");
-        return router.refresh();
+        if (error) { notify(`Couldn’t save the flow: ${error.message}`, "bad"); return null; }
+        return initial.id;
       }
+      const { data: ws } = await supabase.from("workspaces").select("id").limit(1).maybeSingle();
+      if (!ws) { setSaving(false); notify("Couldn’t find your workspace. Log out and back in, then try again.", "bad"); return null; }
+      const { data, error } = await supabase.from("flows").insert({ ...row, workspace_id: ws.id }).select("id").single();
       setSaving(false);
+      if (error) { notify(`Couldn’t save the flow: ${error.message}`, "bad"); return null; }
+      return data.id as string;
     }
-    addFlow({ id: `f-${Date.now()}`, name: flowName, domain, status: "passing", time: tested ? "just now" : "not run yet", detail: `${steps.length} steps`, duration: 4.2, schedule });
-    notify("Added to this sample workspace. Connect Supabase to schedule real runs.");
-    router.push("/monitors");
+    if (initial) {
+      updateFlow(initial.id, { name: row.name, domain, schedule, detail: `${row.steps_json.length} steps` });
+      return initial.id;
+    }
+    const id = `f-${Date.now()}`;
+    addFlow({ id, name: row.name, domain, status: "pending", time: "not run yet", detail: "Waiting for its first run.", duration: 0, schedule, lastRunLabel: "Not run yet" });
+    return id;
+  }
+
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const id = await save();
+    if (!id) return;
+    notify(live
+      ? editing ? "Saved. The next run uses the new steps." : "Saved. It runs at the next scheduled check, or press Run now."
+      : editing ? "Saved in this sample workspace." : "Added to this sample workspace. Connect Supabase to schedule real runs.");
+    router.push(live || editing ? `/flows/${id}` : "/monitors");
+    router.refresh();
+  }
+
+  /** Live: save, start a real run on GitHub Actions, and go to the flow page to watch it. */
+  async function saveAndRun() {
+    const form = document.getElementById("builder-form") as HTMLFormElement | null;
+    if (form && !form.reportValidity()) return;
+    const id = await save();
+    if (!id) return;
+    await tracker.start(id, flowName.trim());
+    router.push(`/flows/${id}`);
+    router.refresh();
   }
 
   return (
     <>
       <div className="page-head">
         <div>
-          <Link className="back" href="/monitors"><Icon name="back" size={14} /> Monitors</Link>
-          <h1>New flow</h1>
+          <Link className="back" href={back}><Icon name="back" size={14} /> {initial ? initial.name : "Monitors"}</Link>
+          <h1>{editing ? "Edit flow" : "New flow"}</h1>
           <p>Write the journey the way you’d explain it to a new teammate, one action per step. FlowGuard opens the page and works out which button or field you mean.</p>
         </div>
       </div>
-      <form onSubmit={onSubmit} className="builder">
+      <form id="builder-form" onSubmit={onSubmit} className="builder">
         <section className="panel" aria-labelledby="cfg">
           <div className="panel-head"><h2 id="cfg">Where and when</h2></div>
           <div className="form-sec">
@@ -88,13 +127,10 @@ export function Builder() {
                 {SCHEDULES.map(([label]) => <option key={label}>{label}</option>)}
               </select>
             </label>
-            <fieldset className="field">
-              <legend>When it fails</legend>
-              {ALERTS.map((a) => (
-                <label className="check" key={a.id}><input type="checkbox" defaultChecked={a.on} /><span>{a.label} <span className="muted">· {a.hint}</span></span></label>
-              ))}
-            </fieldset>
-            <p className="muted" style={{ fontSize: 12.5, paddingBottom: 12 }}>A failed run is re-run once before anyone is alerted, so a single network blip won’t wake you up.</p>
+            <div className="field">
+              When it fails
+              <span className="hint">A failed run is re-run once before anyone is alerted, so a single network blip won’t wake you up. Who gets told is set once for the whole workspace in <Link className="link" href="/alerts">Alerts</Link>.</span>
+            </div>
           </div>
         </section>
 
@@ -119,15 +155,25 @@ export function Builder() {
                 <li><code>Type “ada@example.com” into the email field</code>, add <code>and press Enter</code> to submit</li>
                 <li><code>Go to /pricing</code> or a full URL</li>
                 <li><code>Check that “Order confirmed” is visible</code>, <code>Check the URL contains /thank-you</code></li>
+                <li>Fresh test data on every run: <code>{"{{random_email}}"}</code> (e.g. fg+1732540000@example.com), <code>{"{{random_name}}"}</code>, <code>{"{{timestamp}}"}</code>. Useful for signup flows that reject an email they’ve seen before.</li>
               </ul>
             </div>
           </div>
           <div className="actions">
-            {tested && <span className="msg" role="status"><Icon name="check-circle" size={14} /> Steps look runnable (sample check, no site visited)</span>}
-            <Button onClick={() => { setTested(true); notify(`Checked ${steps.length} steps for a ${device.toLowerCase()} browser. Sample mode: no site was visited.`); }}>
-              <Icon name="play" size={14} /> {tested ? "Test again" : "Test run"}
-            </Button>
-            <Button variant="primary" type="submit" disabled={saving}>{saving ? "Saving…" : "Create flow"}</Button>
+            {live ? (
+              <>
+                <span className="msg muted" style={{ color: "var(--muted)" }}>Runs in a real browser on GitHub Actions, about 2–3 minutes.</span>
+                <Button onClick={saveAndRun} disabled={saving}><Icon name="play" size={14} /> Save and run now</Button>
+              </>
+            ) : (
+              <>
+                {tested && <span className="msg" role="status"><Icon name="check-circle" size={14} /> Steps look runnable (sample check, no site visited)</span>}
+                <Button onClick={() => { setTested(true); notify(`Checked ${steps.length} steps for a ${device.toLowerCase()} browser. Sample mode: no site was visited.`, "info"); }}>
+                  <Icon name="play" size={14} /> {tested ? "Check again" : "Check steps"}
+                </Button>
+              </>
+            )}
+            <Button variant="primary" type="submit" disabled={saving}>{saving ? "Saving…" : editing ? "Save changes" : "Create flow"}</Button>
           </div>
         </section>
       </form>

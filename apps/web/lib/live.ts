@@ -1,5 +1,6 @@
 import "server-only";
-import type { DayResult, DemoFlow, Status } from "./demo-data";
+import type { DemoFlow, Status } from "./demo-data";
+import { allRanges, bucketize, RANGES, type RangeBuckets, type RunPoint } from "./runs-data";
 import { getSupabaseServer } from "./supabase/server";
 
 /** Everything the signed-in workspace shell needs, loaded once per request in the (app) layout. */
@@ -8,6 +9,12 @@ export interface LiveData {
   workspace: { id: string; name: string; plan: string };
   flows: DemoFlow[];
   activity: Array<{ status: Exclude<Status, "pending">; title: string; desc: string; time: string; href: string }>;
+  /** Workspace-wide run history for the Monitors charts, already bucketed on the server. */
+  charts: RangeBuckets;
+  /** Server clock when this was loaded, so the browser labels slots consistently. */
+  loadedAt: number;
+  /** Newest run per flow (id + start time), used by the Run button to spot a new result. */
+  latestRun: Record<string, { id: string; startedAt: string } | null>;
   stats: {
     passed24h: number; total24h: number;
     passed7d: number; total7d: number;
@@ -42,7 +49,8 @@ export async function getLiveData(): Promise<LiveData | null> {
   const local = email.split("@")[0] || "you";
   const me = { email, name: local, initials: local.slice(0, 2).toUpperCase() };
   const empty: LiveData["stats"] = { passed24h: 0, total24h: 0, passed7d: 0, total7d: 0, medianMs: null, failuresThisWeek: 0 };
-  if (!ws) return { user: me, workspace: { id: "", name: "My Workspace", plan: "free" }, flows: [], activity: [], stats: empty };
+  const nowMs = Date.now();
+  if (!ws) return { user: me, workspace: { id: "", name: "My Workspace", plan: "free" }, flows: [], activity: [], stats: empty, charts: allRanges([], nowMs), loadedAt: nowMs, latestRun: {} };
 
   const { data: flowRows } = await supabase
     .from("flows")
@@ -51,7 +59,7 @@ export async function getLiveData(): Promise<LiveData | null> {
     .order("created_at");
   const flows = (flowRows ?? []) as FlowRow[];
 
-  const now = Date.now();
+  const now = nowMs;
   let runs: RunRow[] = [];
   if (flows.length) {
     const { data } = await supabase
@@ -76,7 +84,7 @@ export async function getLiveData(): Promise<LiveData | null> {
     const passed = fr.filter((r) => r.status === "PASSING").length;
     const base = {
       id: f.id, name: f.name, domain, schedule,
-      history: dayHistory(fr, now),
+      days: bucketize(fr.map(toPoint), now, RANGES["30d"].count, RANGES["30d"].size),
       uptime: fr.length ? `${round1((passed / fr.length) * 100)}%` : "–",
     };
     if (!last) {
@@ -107,6 +115,12 @@ export async function getLiveData(): Promise<LiveData | null> {
     user: me,
     workspace: { id: ws.id, name: ws.name, plan: ws.plan },
     flows: viewFlows,
+    charts: allRanges(runs.map(toPoint), now),
+    loadedAt: now,
+    latestRun: Object.fromEntries(flows.map((f) => {
+      const r = byFlow.get(f.id)?.[0];
+      return [f.id, r ? { id: r.id, startedAt: r.started_at } : null];
+    })),
     activity: runs.slice(0, 6).map((r) => {
       const f = flowById.get(r.flow_id)!;
       const failed = r.status === "FAILED";
@@ -129,20 +143,11 @@ export async function getLiveData(): Promise<LiveData | null> {
   };
 }
 
-/** 30 cells, oldest first: any confirmed failure that day = bad, any flaky pass = warn. */
-function dayHistory(runs: RunRow[], now: number): DayResult[] {
-  const cells: DayResult[] = Array.from({ length: 30 }, () => "none");
-  for (const r of runs) {
-    const i = 29 - Math.floor((now - Date.parse(r.started_at)) / DAY);
-    if (i < 0 || i > 29) continue;
-    const v: DayResult = r.status === "FAILED" ? "bad" : r.flaky ? "warn" : "ok";
-    const rank = { none: 0, ok: 1, warn: 2, bad: 3 } as const;
-    if (rank[v] > rank[cells[i]]) cells[i] = v;
-  }
-  return cells;
+export function toPoint(r: { status: string; flaky: boolean | null; started_at: string; duration_ms: number | null }): RunPoint {
+  return { t: Date.parse(r.started_at), s: r.status === "FAILED" ? "fail" : r.flaky ? "flaky" : "pass", ms: r.duration_ms };
 }
 
-function relative(iso: string, now: number): string {
+export function relative(iso: string, now: number): string {
   const s = Math.max(0, Math.round((now - Date.parse(iso)) / 1000));
   if (s < 60) return "just now";
   if (s < 3600) return `${Math.floor(s / 60)}m ago`;
@@ -150,7 +155,7 @@ function relative(iso: string, now: number): string {
   return `${Math.floor(s / 86_400)}d ago`;
 }
 
-function hostname(url: string): string {
+export function hostname(url: string): string {
   try { return new URL(url).hostname; } catch { return url; }
 }
 

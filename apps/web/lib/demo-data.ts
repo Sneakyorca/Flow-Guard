@@ -3,10 +3,16 @@
  * (docs/design-reference/App.tsx) so the UI can be reviewed without a backend.
  */
 
+import { allRanges, bucketize, demoPoints, RANGES, type Bucket, type RangeBuckets, type RunPoint } from "./runs-data";
+import type { FlowDetail } from "./flow-detail";
+
 export type Status = "passing" | "failed" | "warning" | "pending";
 
-/** One cell of the 30-day bar: a day with failures, a flaky day, a clean day, or no runs. */
-export type DayResult = "ok" | "bad" | "warn" | "none";
+/**
+ * The sample workspace's clock: shortly after the sample incident (Oct 24, 14:02 UTC).
+ * Fixed so the prerendered page and the browser draw identical charts.
+ */
+export const DEMO_NOW = Date.UTC(2026, 9, 24, 14, 16);
 
 export interface DemoFlow {
   id: string;
@@ -24,7 +30,8 @@ export interface DemoFlow {
   lastRunLabel?: string;
   /** Pass rate over the last 30 days, e.g. "96.7%"; "–" when there are no runs. */
   uptime?: string;
-  history?: DayResult[];
+  /** 30 daily buckets, oldest first. */
+  days?: Bucket[];
   /** Share token of the latest run, used for /replay/[token]. */
   replayToken?: string;
 }
@@ -56,6 +63,23 @@ export const demoFlows: DemoFlow[] = [
     schedule: "Every 1 hour",
   })),
 ];
+
+const pointsCache = new Map<string, RunPoint[]>();
+/** 30 days of hourly sample runs for a demo flow (deterministic). */
+export function demoFlowPoints(f: Pick<DemoFlow, "id" | "status" | "duration">): RunPoint[] {
+  const key = `${f.id}:${f.status}`;
+  if (!pointsCache.has(key)) pointsCache.set(key, f.status === "pending" ? [] : demoPoints(f.id, f.status, f.duration || 4, DEMO_NOW));
+  return pointsCache.get(key)!;
+}
+
+export function demoDays(f: Pick<DemoFlow, "id" | "status" | "duration">): Bucket[] {
+  return bucketize(demoFlowPoints(f), DEMO_NOW, RANGES["30d"].count, RANGES["30d"].size);
+}
+
+/** Workspace charts for the sample workspace: every demo flow's runs together. */
+export function demoCharts(flows: DemoFlow[]): RangeBuckets {
+  return allRanges(flows.flatMap((f) => demoFlowPoints(f)), DEMO_NOW);
+}
 
 export const demoActivity: Array<{ status: Status; title: string; desc: string; time: string }> = [
   { status: "failed", title: "Checkout flow failed", desc: "shopkemi.com · Step 4: Pay Now", time: "14m ago" },
@@ -166,3 +190,41 @@ export const sampleScan = {
     ["JavaScript", "1 error on all 15 pages: the site loads jQuery over plain http:// (ajax.googleapis.com), which browsers block on an https page. Anything that depends on that script is broken."],
   ] as Array<[string, string]>,
 };
+
+const DEMO_STEPS: Record<string, string[]> = {
+  "f-checkout": demoReplay.steps.map((s) => s.instruction),
+  "f-signup": ['Click "Sign up"', "Type {{random_email}} into the email field", 'Type "correct-horse-42" into the password field and press Enter', 'Check that "Welcome to Ledgerly" is visible', "Check the URL contains /onboarding"],
+  "f-demo": ["Go to /pricing", 'Click "Book a demo"', 'Type "Ada Obi" into the name field', 'Check that "Thanks, we’ll be in touch" is visible'],
+};
+
+/** The /flows/[id] view of a demo flow, built from the same sample runs as the charts. */
+export function demoDetail(f: DemoFlow): FlowDetail {
+  const points = demoFlowPoints(f);
+  const runs = [...points].reverse();
+  return {
+    source: "demo",
+    id: f.id,
+    name: f.name,
+    startUrl: `https://${f.domain}/`,
+    domain: f.domain,
+    viewport: f.id === "f-checkout" ? "mobile" : "desktop",
+    scheduleCron: "0 * * * *",
+    scheduleLabel: f.schedule,
+    status: f.schedule === "Paused" ? "paused" : "active",
+    steps: DEMO_STEPS[f.id] ?? demoBuilderSteps,
+    charts: allRanges(points, DEMO_NOW),
+    days: bucketize(points, DEMO_NOW, RANGES["30d"].count, RANGES["30d"].size),
+    runCount: points.length,
+    latestRunId: runs[0] ? `${f.id}-${runs[0].t}` : null,
+    runs: runs.slice(0, 50).map((p) => ({
+      id: `${f.id}-${p.t}`,
+      startedAt: p.t,
+      status: p.s === "fail" ? "FAILED" : "PASSING",
+      flaky: p.s === "flaky",
+      durationMs: p.ms,
+      failedStep: p.s === "fail" ? 3 : null,
+      summary: p.s === "fail" ? demoReplay.summaryTitle : p.s === "flaky" ? "Passed on retry" : "All steps passed",
+      token: p.s === "fail" ? DEMO_REPLAY_ID : null,
+    })),
+  };
+}
