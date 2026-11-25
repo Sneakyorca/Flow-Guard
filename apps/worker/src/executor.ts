@@ -1,4 +1,5 @@
 import { mkdir, rm, writeFile } from "node:fs/promises";
+import { fillPlaceholders, makePlaceholderValues } from "./placeholders.js";
 import path from "node:path";
 import type { Page } from "playwright";
 import {
@@ -32,7 +33,10 @@ const DEFAULT_STEP_TIMEOUT = 10_000;
 
 /** Run a plain-English flow end to end. Never throws for flow failures; returns diagnostics. */
 export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
-  const { runId, startUrl, steps, viewport, resolver, outDir } = opts;
+  const { runId, startUrl, viewport, resolver, outDir } = opts;
+  // Fresh {{random_email}} etc. for this attempt; the same value in every step.
+  const values = makePlaceholderValues();
+  const steps = opts.steps.map((s) => ({ ...s, instruction: fillPlaceholders(s.instruction, values) }));
   const timeout = opts.stepTimeoutMs ?? DEFAULT_STEP_TIMEOUT;
   const log = opts.log ?? (() => {});
   await mkdir(path.join(outDir, "steps"), { recursive: true });

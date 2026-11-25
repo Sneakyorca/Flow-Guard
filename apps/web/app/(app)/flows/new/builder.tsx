@@ -155,7 +155,7 @@ export function Builder({ initial }: { initial?: BuilderInitial }) {
                 <li><code>Type “ada@example.com” into the email field</code>, add <code>and press Enter</code> to submit</li>
                 <li><code>Go to /pricing</code> or a full URL</li>
                 <li><code>Check that “Order confirmed” is visible</code>, <code>Check the URL contains /thank-you</code></li>
-                <li>Fresh test data on every run: <code>{"{{random_email}}"}</code> (e.g. fg+1732540000@example.com), <code>{"{{random_name}}"}</code>, <code>{"{{timestamp}}"}</code>. Useful for signup flows that reject an email they’ve seen before.</li>
+                <li>Fresh test data on every run, for signups that reject an email they’ve seen: <code>{"Type {{random_email}} into the email field"}</code>, <code>{"Type \u201c{{random_name}}\u201d into the name field"}</code>, also <code>{"{{timestamp}}"}</code> and <code>{"{{random_number}}"}</code>.</li>
               </ul>
             </div>
           </div>
