@@ -84,7 +84,7 @@ export function ReplayView({ data, shareId, mode, flowId }: { data: ReplayData; 
             <section className="panel player" aria-label="Recording">
               <div className="player-bar"><span>Recording</span></div>
               <p className="muted" style={{ padding: "40px 20px", textAlign: "center", fontSize: 14 }}>
-                No video was saved for this run. The steps and logs below are from the real run.
+                No video for this run. Recordings are kept for 7 days (30 for failures), or the upload didn’t finish. The steps and logs below are from the real run.
               </p>
             </section>
           )}

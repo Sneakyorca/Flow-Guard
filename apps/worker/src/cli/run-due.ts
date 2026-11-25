@@ -8,6 +8,7 @@
  * Needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY. Without them it exits 0 with a notice,
  * so forks and fresh clones don't get red scheduled builds.
  */
+import { cleanupStorage } from "../cleanup.js";
 import { isDue } from "../cron.js";
 import { executeAndPersist, loadActiveFlows, loadFlow, supabaseFromEnv } from "../persist.js";
 import { loadDotEnv, parseArgs, runsDir } from "./common.js";
@@ -43,6 +44,17 @@ async function main() {
   }
   // Flow failures are reported via Slack/DB; the job itself only fails on infrastructure errors.
   console.log(`run-due: done, ${failed} failing flow(s).`);
+  await runCleanup(db);
+}
+
+async function runCleanup(db: NonNullable<ReturnType<typeof supabaseFromEnv>>) {
+  if (process.env.FLOWGUARD_SKIP_CLEANUP === "1") return;
+  try {
+    await cleanupStorage(db);
+  } catch (err) {
+    // Never fail the scheduled job over housekeeping; it retries next hour.
+    console.warn(`cleanup: ${(err as Error).message}`);
+  }
 }
 
 main().catch((err) => {
