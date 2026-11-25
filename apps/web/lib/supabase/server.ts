@@ -22,6 +22,14 @@ export async function getSupabaseServer(): Promise<SupabaseClient | null> {
   });
 }
 
+/** True when a user is signed in (false in demo mode or when signed out). */
+export async function isSignedIn(): Promise<boolean> {
+  const supabase = await getSupabaseServer();
+  if (!supabase) return false;
+  const { data: { user } } = await supabase.auth.getUser();
+  return Boolean(user);
+}
+
 /** Service-role client for server-only tasks (signing replay URLs). Null if not configured. */
 export function getSupabaseAdmin(): SupabaseClient | null {
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;

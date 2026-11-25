@@ -366,6 +366,23 @@ table.flows tr.is-failed { background: color-mix(in srgb, var(--bad-bg) 60%, tra
 .empty-start h2 { font-size: 17px; font-weight: 600; }
 .empty-start > p:first-of-type { margin: 8px 0 18px; color: var(--ink-2); font-size: 14px; line-height: 1.55; }
 
+/* ---------- loading, error, not found ---------- */
+.state-page { max-width: 560px; margin: 0 auto; padding: 96px 24px; }
+.state-page .kicker { font-size: 13px; font-weight: 550; color: var(--accent-ink); }
+.state-page h1 { margin-top: 10px; font-size: clamp(26px, 4vw, 34px); line-height: 1.15; font-weight: 650; letter-spacing: -0.02em; }
+.state-page > p { margin-top: 12px; color: var(--ink-2); font-size: 15px; line-height: 1.55; }
+.state-actions { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 24px !important; }
+.state-code { font-size: 12.5px !important; color: var(--muted) !important; }
+.state-panel { padding: 28px 24px; max-width: 640px; }
+.state-panel h1 { font-size: 20px; font-weight: 600; }
+.state-panel > p:first-of-type { margin-top: 8px; color: var(--ink-2); font-size: 14px; line-height: 1.55; }
+.loading-bar { height: 3px; width: 100%; max-width: 240px; background: var(--line); border-radius: 3px; overflow: hidden; }
+.loading-bar i { display: block; height: 100%; width: 40%; background: var(--accent); border-radius: 3px; animation: fg-slide 1.1s ease-in-out infinite; }
+@keyframes fg-slide { 0% { transform: translateX(-100%); } 100% { transform: translateX(250%); } }
+.skel { border-radius: 6px; background: var(--surface-2); border: 1px solid var(--line); animation: fg-pulse 1.4s ease-in-out infinite; }
+.skel-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+@keyframes fg-pulse { 50% { opacity: 0.55; } }
+
 /* ---------- login / sign-up ---------- */
 .auth-page { min-height: 100vh; display: flex; flex-direction: column; }
 .auth-main { flex: 1; width: 100%; max-width: 400px; margin: 0 auto; padding: 40px 16px 64px; }

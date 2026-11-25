@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
-import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { Wordmark } from "@/components/shell";
+import { PublicHeader } from "@/components/public-header";
 import { LandingFooter } from "@/components/scanner";
 import { getPublicScan } from "@/lib/scan-report";
 import { ScanResult } from "./scan-result";
@@ -24,10 +23,7 @@ export default async function ScanReportPage({ params }: { params: Promise<{ tok
   if (!s) notFound();
   return (
     <>
-      <header className="landing-top">
-        <Link href="/" aria-label="FlowGuard home"><Wordmark beta={false} /></Link>
-        <Link className="btn ghost" href="/">Scan another site</Link>
-      </header>
+      <PublicHeader extra={{ href: "/", label: "Scan another site" }} />
       <main className="public-replay" style={{ maxWidth: 860 }}>
         <ScanResult scan={s} />
       </main>

@@ -2,7 +2,8 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { cache } from "react";
-import { AppShell, Wordmark } from "@/components/shell";
+import { AppShell } from "@/components/shell";
+import { PublicHeader } from "@/components/public-header";
 import { ToastProvider } from "@/components/toast";
 import { LandingFooter } from "@/components/scanner";
 import { getLiveData } from "@/lib/live";
@@ -56,12 +57,7 @@ export default async function ReplayPage({ params }: { params: Promise<{ runId: 
 
   return (
     <ToastProvider>
-      <header className="landing-top">
-        <Link href="/" aria-label="FlowGuard home"><Wordmark beta={false} /></Link>
-        <nav style={{ display: "flex", gap: 8 }}>
-          {live ? <Link className="btn" href="/monitors">Your monitors</Link> : <Link className="btn ghost" href="/login">Log in</Link>}
-        </nav>
-      </header>
+      <PublicHeader />
       <main className="public-replay">
         <p className="public-note">
           {data.source === "demo" ? "A sample failure, so you can see what a FlowGuard replay looks like." : "Someone shared this FlowGuard run with you. You can see this one run and nothing else from their account."}

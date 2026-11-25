@@ -1,6 +1,6 @@
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Wordmark } from "./shell";
+import { PublicHeader } from "./public-header";
 import { LandingFooter } from "./scanner";
 
 export interface LegalSection { id: string; title: string; body: ReactNode }
@@ -14,10 +14,7 @@ export function Ph({ children }: { children: ReactNode }) {
 export function LegalPage({ title, intro, sections, other }: { title: string; intro: ReactNode; sections: LegalSection[]; other: { href: string; label: string } }) {
   return (
     <>
-      <header className="landing-top">
-        <Link href="/" aria-label="FlowGuard home"><Wordmark beta={false} /></Link>
-        <Link className="btn ghost" href={other.href}>{other.label}</Link>
-      </header>
+      <PublicHeader extra={other} />
       <main className="legal">
         <h1>{title}</h1>
         <p className="legal-meta">Effective <Ph>Effective date</Ph> · Last updated <Ph>Effective date</Ph></p>
