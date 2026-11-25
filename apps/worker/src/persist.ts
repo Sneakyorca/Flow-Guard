@@ -5,7 +5,7 @@ import { createClient, type SupabaseClient } from "@supabase/supabase-js";
 import { FlowRow, type RunDiagnostics } from "@flowguard/shared";
 import { runFlowConfirmed } from "./confirm.js";
 import { getResolver } from "./resolvers/index.js";
-import { sendSlackAlert } from "./alerts.js";
+import { sendEmailAlert, sendSlackAlert } from "./alerts.js";
 
 export const REPLAYS_BUCKET = "replays";
 
@@ -40,6 +40,19 @@ export async function loadFlow(db: SupabaseClient, flowId: string): Promise<Flow
   const { data, error } = await db.from("flows").select("*, workspaces(id, slack_webhook_url)").eq("id", flowId).single();
   if (error) throw new Error(`Loading flow ${flowId} failed: ${error.message}`);
   return { ...FlowRow.parse(data), workspaces: data.workspaces ?? null };
+}
+
+/** Email the workspace owner about a confirmed failure, if email alerts are on and Brevo is configured. */
+async function emailOwner(db: SupabaseClient, flow: FlowWithWorkspace, d: RunDiagnostics, replayUrl: string): Promise<void> {
+  if (!process.env.BREVO_API_KEY || !process.env.ALERT_FROM_EMAIL || !flow.workspaces?.id) return;
+  // alert_email arrives with migration 0004; before that, email alerts default to on.
+  const { data: ws, error } = await db.from("workspaces").select("owner_id, alert_email").eq("id", flow.workspaces.id).maybeSingle();
+  const row = error ? (await db.from("workspaces").select("owner_id").eq("id", flow.workspaces.id).maybeSingle()).data : ws;
+  if (!row || (row as { alert_email?: boolean }).alert_email === false) return;
+  const { data: owner } = await db.auth.admin.getUserById(row.owner_id as string);
+  const to = owner?.user?.email;
+  if (!to) return;
+  if (await sendEmailAlert(to, flow, d, replayUrl)) console.log(`  emailed the workspace owner`);
 }
 
 export interface PersistedRun {
@@ -109,6 +122,7 @@ export async function executeAndPersist(db: SupabaseClient, flow: FlowWithWorksp
   if (diagnostics.status === "FAILED") {
     const webhook = flow.workspaces?.slack_webhook_url || process.env.SLACK_WEBHOOK_URL;
     if (webhook) await sendSlackAlert(webhook, flow, diagnostics, replayUrl).catch((e) => console.warn(`[alert] slack failed: ${e.message}`));
+    await emailOwner(db, flow, diagnostics, replayUrl).catch((e) => console.warn(`[alert] email failed: ${e.message}`));
   }
   return { runId, shareToken, diagnostics, replayUrl };
 }
