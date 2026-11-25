@@ -13,6 +13,7 @@ import {
 import { launchBrowser, newContext } from "./browser.js";
 import { takeSnapshot } from "./snapshot.js";
 import { explainFailure } from "./explain.js";
+import { isNoiseConsole, isNoiseRequestFailure } from "./noise.js";
 import type { Resolver } from "./resolvers/index.js";
 
 export interface RunOptions {
@@ -56,7 +57,7 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
     const t = () => Date.now() - started;
 
     page.on("console", (msg) => {
-      if (msg.type() === "error" || msg.type() === "warning") {
+      if ((msg.type() === "error" || msg.type() === "warning") && !isNoiseConsole(msg.type(), msg.text())) {
         const loc = msg.location();
         consoleLogs.push({ type: msg.type(), text: msg.text().slice(0, 2000), location: loc.url ? `${loc.url}:${loc.lineNumber}:${loc.columnNumber}` : undefined, at_ms: t() });
       }
@@ -71,8 +72,8 @@ export async function runFlow(opts: RunOptions): Promise<RunDiagnostics> {
     });
     page.on("requestfailed", (req) => {
       const failure = req.failure()?.errorText ?? "failed";
-      // Aborted media/beacon requests on navigation are noise.
-      if (/ERR_ABORTED/.test(failure) && ["media", "ping", "beacon"].includes(req.resourceType())) return;
+      // Cancelled prefetches, media and beacons on navigation are noise (see noise.ts).
+      if (isNoiseRequestFailure(req, failure)) return;
       networkErrors.push({ method: req.method(), url: req.url().slice(0, 500), status: null, failure, resource_type: req.resourceType(), at_ms: t() });
     });
 
@@ -186,7 +187,9 @@ async function attemptStep(page: Page, resolver: Resolver, instruction: string, 
     } catch (err) {
       const msg = errMsg(err);
       const isAssertion = failedAction?.action === "assert_text" || failedAction?.action === "assert_url";
-      if (attempt === 2 || isAssertion) {
+      // A URL that answers 404/500 will answer the same a second later: no point healing.
+      const isMissingPage = failedAction?.action === "navigate" && /returned [45]\d\d/.test(msg);
+      if (attempt === 2 || isAssertion || isMissingPage) {
         return { actions: history, reasoning: reasons.join(" "), attempts: attempt, error: attempt === 2 && previousError && previousError !== msg ? `${msg} (first attempt: ${previousError})` : msg };
       }
       previousError = msg;
@@ -243,8 +246,13 @@ export async function execute(page: Page, a: ResolvedStep, timeout: number): Pro
     }
     case "navigate": {
       if (!a.value) throw new Error("navigate needs a URL");
-      await page.goto(new URL(a.value, page.url()).toString(), { waitUntil: "domcontentloaded", timeout: 30_000 });
+      const target = new URL(a.value, page.url()).toString();
+      const res = await page.goto(target, { waitUntil: "domcontentloaded", timeout: 30_000 });
       await settle(page);
+      // A 404/500 page still "loads"; treat it as the step failing, not as a pass.
+      if (res && res.status() >= 400) {
+        throw new Error(`Page ${target} returned ${res.status()}${res.statusText() ? ` ${res.statusText()}` : ""}`);
+      }
       return;
     }
     case "assert_text": {

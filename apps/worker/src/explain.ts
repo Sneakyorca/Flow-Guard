@@ -35,6 +35,15 @@ export function explainFailure(d: Omit<RunDiagnostics, "explanation">): FailureE
     return make("site_down", "The site didn't load", `Opening ${d.start_url} failed: ${firstClause(err)}`, "Check that the site is up and reachable from outside your network.");
   }
 
+  // A "go to" step that landed on an error page.
+  const missing = err.match(/Page (\S+) returned (\d{3})/);
+  if (missing) {
+    const [, url, code] = missing;
+    const Step = stepLabel.charAt(0).toUpperCase() + stepLabel.slice(1);
+    if (code.startsWith("4")) return make("wrong_page", `${Step} went to a page that doesn't exist`, `${shortUrl(url)} answered ${code}${code === "404" ? " (not found)" : ""}.`, "The page was moved, renamed or deleted. Fix the link in the step, or restore the page.");
+    return make("server_error", `${Step} went to a page that's erroring`, `${shortUrl(url)} answered ${code}.`, "Check your hosting provider and server logs for that page.");
+  }
+
   // A JS exception right when the step ran is usually the real cause, whatever the step error says.
   if (jsErrors.length) {
     const during = prev && jsErrors[0].at_ms < (step?.started_ms ?? 0) ? `step ${idx} (“${prev.instruction}”)` : stepLabel;
