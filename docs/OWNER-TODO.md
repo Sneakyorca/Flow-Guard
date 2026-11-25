@@ -12,9 +12,9 @@ Where to find things:
 ## 1. Fix what is broken right now
 
 - [ ] **Re-paste the `GEMINI_API_KEY` GitHub secret.** Cloud runs reject it, most likely because the value was pasted as `GEMINI_API_KEY=AIza…` instead of just `AIza…`. Open the secret, click **Update**, paste **only the key** (it starts with `AIza`, no name, no `=`, no quotes, no spaces), save. Runs now log one clear line, "gemini is misconfigured … check the API key secret", if it is still wrong, instead of failing on every step.
-- [ ] **Fix the steps in your "cleartill" flow.** It fails every hour because one step goes to `/pricing`, which returns 404. Open the flow in FlowGuard (Monitors → click its name → **Edit steps**) and replace the sample steps with real ones from your site. You no longer need the Supabase table editor for this.
-- [ ] **Run migration 0004** in the Supabase SQL editor: paste the whole of `supabase/migrations/0004_alert_settings_and_private_replays.sql` and press Run. This turns on the "Email me" and "Public replay links" switches on the Alerts page. The Slack webhook saves without it.
-- [ ] **Run migration 0005** the same way: `supabase/migrations/0005_public_scan_limits.sql` (indexes that keep the free scan's rate limits fast).
+- [x] **Fix the steps in your "cleartill" flow.** Done 25 Nov: it now opens the sample store, adds the Vitamin C serum, opens checkout and checks "How do you want it?" appears (stops before any form or payment). Passed in 26 s. Edit it any time from Monitors → click its name → **Edit steps**.
+- [x] **Run migration 0004** (alert settings, private replays). Applied to the Flowguard project on 25 Nov.
+- [x] **Run migration 0005** (free-scan rate-limit indexes). Applied on 25 Nov.
 
 ## 2. Put it on the internet (all free)
 
@@ -50,11 +50,22 @@ Where to find things:
 - [ ] **Fill in the legal placeholders** in `apps/web/app/(public)/terms/page.tsx` and `apps/web/app/(public)/privacy/page.tsx`. They're highlighted orange on the pages: `[Company legal name]`, `[Registered address]`, `[Contact email]`, `[Effective date]`, the liability cap, governing law and courts, backup retention. The list and notes are in `docs/legal/README.md`.
 - [ ] **Get the Terms and Privacy Policy reviewed by a lawyer** (Nigeria Data Protection Act 2023 and GDPR) before a public launch or taking money. They are templates, not legal advice. `docs/legal/README.md` lists what to ask them about, including whether you need to register with the NDPC and whether you need a Data Processing Agreement for business customers.
 - [ ] **Decide about the Gemini free tier.** The Privacy Policy says Google may use free-tier Gemini API content to improve its products. If you don't want that, switch to a paid tier or rely on Claude/heuristic, then update section 5 of the policy.
-- [ ] **Read the brand name results in `docs/research/brand.md` and decide.** "FlowGuard" is already used by two other monitoring products and a US trademark covering monitoring software (Class 9/42). The doc suggests keeping it for the beta and choosing a new public name (shortlist: Oluso, Tillproof, Pathproof, Walkpast) before a paid launch. Domains could **not** be checked from the cloud session: look up your favourites at a registrar (Namecheap, Porkbun or Cloudflare) and search the USPTO / WIPO / Nigerian trademark registries as the doc describes.
+- [ ] **Read the brand name results in `docs/research/brand.md` and decide.** "FlowGuard" is already used by two other monitoring products and a US trademark covering monitoring software (Class 9/42). The doc suggests keeping it for the beta and choosing a new public name (shortlist: Oluso, Tillproof, Pathproof, Walkpast) before a paid launch. Domain check (RDAP registry lookups, 25 Nov; "free?" means no registration record, confirm at a registrar before you count on it):
+
+  | Name | .com | .app | .io |
+  |---|---|---|---|
+  | flowguard | taken | taken | free? |
+  | oluso | taken | free? | free? |
+  | tillproof | taken | free? | free? |
+  | pathproof | taken | taken | free? |
+  | walkpast | taken | free? | free? |
+
+  `.ng` couldn't be checked automatically (try whois.nic.net.ng). Every `.com` is taken, so plan on `.app` or `.io`. Still search the USPTO / WIPO / Nigerian trademark registries as the doc describes.
 
 ## 5. Keep it at $0
 
-- [ ] **Check GitHub Actions minutes after a day of hourly runs.** Before this round a run with one flow took about 69 s and an idle tick 38 s. The workflow now skips the browser when nothing is due and caches Chromium. Look at Actions → any "Scheduled flow runs" run → **Usage**, or github.com → Settings → Billing → Usage. GitHub showed **0 billable minutes** for this repo's runs on 25 Nov 2026, which usually means the repo is **public** (public repos get unlimited free minutes). If it is **private**, you get 2,000 free minutes a month; hourly runs use roughly 720–1,500 depending on how many flows you have. **Your decision:** making the repo public removes the limit, but anyone can then read the code (your secrets stay private, because they live in GitHub/Vercel/Supabase settings, never in the code).
+- [x] **The repo is public** (since 25 Nov), so GitHub Actions minutes are unlimited and free. Git history was checked first: no keys, tokens or passwords were ever committed. The note below only matters if you make it private again.
+- [ ] ~~Check GitHub Actions minutes after a day of hourly runs.~~ Before this round a run with one flow took about 69 s and an idle tick 38 s. The workflow now skips the browser when nothing is due and caches Chromium. Look at Actions → any "Scheduled flow runs" run → **Usage**, or github.com → Settings → Billing → Usage. GitHub showed **0 billable minutes** for this repo's runs on 25 Nov 2026, which usually means the repo is **public** (public repos get unlimited free minutes). If it is **private**, you get 2,000 free minutes a month; hourly runs use roughly 720–1,500 depending on how many flows you have. **Your decision:** making the repo public removes the limit, but anyone can then read the code (your secrets stay private, because they live in GitHub/Vercel/Supabase settings, never in the code).
 - [ ] **Watch Supabase storage** (Supabase → Project Settings → Usage). The free tier has 1 GB. Old recordings are now deleted automatically (passing runs after 7 days, failures after 30), and each run's log says how much it freed (`cleanup: freed … MB`). To keep things for less time, add repository **variables** (Settings → Secrets and variables → Actions → Variables tab) `RETAIN_PASSING_DAYS` / `RETAIN_FAILED_DAYS`, and update the Privacy Policy to match.
 
 ## 6. Nice to have
