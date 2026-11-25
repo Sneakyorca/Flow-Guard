@@ -112,7 +112,6 @@ export function LandingFooter() {
         <Link className="link" href="/help">Help</Link>
         <Link className="link" href="/terms">Terms</Link>
         <Link className="link" href="/privacy">Privacy</Link>
-        <a className="link" href="https://github.com/Sneakyorca/Flow-Guard">Source on GitHub</a>
       </nav>
     </footer>
   );
