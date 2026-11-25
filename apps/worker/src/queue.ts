@@ -8,6 +8,7 @@
  */
 import { Queue, Worker, type Job } from "bullmq";
 import { executeAndPersist, loadFlow, supabaseFromEnv } from "./persist.js";
+import { resetResolverBreaker } from "./resolvers/index.js";
 import { loadDotEnv, runsDir } from "./cli/common.js";
 
 export const QUEUE_NAME = "flow-runs";
@@ -34,6 +35,8 @@ export async function enqueueFlowRun(job: FlowRunJob): Promise<string | undefine
 }
 
 export async function processFlowRun(job: Job<FlowRunJob>) {
+  // Long-lived process: give a fixed API key a fresh chance on each job.
+  resetResolverBreaker();
   const db = supabaseFromEnv();
   if (!db) throw new Error("Supabase is not configured");
   const flow = await loadFlow(db, job.data.flowId);

@@ -38,20 +38,57 @@ export function getResolver(name = process.env.FLOWGUARD_RESOLVER): Resolver {
   }
 }
 
+/**
+ * Circuit breaker: providers that failed with an auth or configuration error (bad key, no
+ * credit, no permission, unknown model) are skipped for the rest of this process. Without it,
+ * an invalid key is retried on every step, flooding logs and slowing every run.
+ * Transient errors (429, 5xx, timeouts) still fall back per step and try again next step.
+ */
+const disabled = new Map<string, string>();
+
+function httpStatus(err: unknown): number | null {
+  const s = (err as { status?: unknown })?.status;
+  if (typeof s === "number") return s;
+  const m = (err instanceof Error ? err.message : String(err)).match(/responded (\d{3})/);
+  return m ? Number(m[1]) : null;
+}
+
+/** True for errors that won't fix themselves within this run. */
+export function isConfigError(err: unknown): boolean {
+  const status = httpStatus(err);
+  const msg = err instanceof Error ? err.message : String(err);
+  if (status === 401 || status === 403 || status === 404) return true;
+  if (status === 400 && /api[ _-]?key|credit|billing|permission|not valid|invalid.*(key|auth)|unauthori[sz]ed|model/i.test(msg)) return true;
+  return /API key not valid|invalid x-api-key|authentication_error|permission_error|credit balance/i.test(msg);
+}
+
+/** For tests and long-lived workers (BullMQ): clear the breaker. */
+export function resetResolverBreaker(): void {
+  disabled.clear();
+}
+
 function withFallback(primary: Resolver, next: Resolver = heuristicResolver): Resolver {
+  const mark = (plan: Awaited<ReturnType<Resolver["resolve"]>>, why: string) => {
+    for (const a of plan.actions) {
+      if (!a.reasoning.startsWith("[")) a.reasoning = `[${next.name} fallback: ${primary.name} ${why}] ${a.reasoning}`;
+    }
+    return plan;
+  };
   return {
     name: primary.name,
     async resolve(input: ResolveInput) {
+      if (disabled.has(primary.name)) return mark(await next.resolve(input), "disabled");
       try {
         return await primary.resolve(input);
       } catch (err) {
         const msg = err instanceof Error ? err.message : String(err);
-        console.warn(`[resolver] ${primary.name} failed (${msg.slice(0, 200)}); falling back to ${next.name}`);
-        const plan = await next.resolve(input);
-        for (const a of plan.actions) {
-          if (!a.reasoning.startsWith("[")) a.reasoning = `[${next.name} fallback: ${primary.name} unavailable] ${a.reasoning}`;
+        if (isConfigError(err)) {
+          disabled.set(primary.name, msg);
+          console.warn(`[resolver] ${primary.name} is misconfigured (${msg.slice(0, 200)}). Not calling it again in this run; using ${next.name}. Check the API key secret.`);
+        } else {
+          console.warn(`[resolver] ${primary.name} failed (${msg.slice(0, 200)}); falling back to ${next.name}`);
         }
-        return plan;
+        return mark(await next.resolve(input), "unavailable");
       }
     },
   };
