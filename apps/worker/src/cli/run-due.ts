@@ -4,6 +4,8 @@
  *   npm run run-due -w @flowguard/worker                # run every flow whose cron is due
  *   npm run run-due -w @flowguard/worker -- --flow <id> # run one flow now (webhook/manual)
  *   npm run run-due -w @flowguard/worker -- --dry-run   # list due flows only
+ *   npm run run-due -w @flowguard/worker -- --plan      # count due flows; writes due=N to $GITHUB_OUTPUT
+ *   npm run run-due -w @flowguard/worker -- --cleanup-only  # only the retention cleanup (no browser)
  *
  * Needs SUPABASE_URL + SUPABASE_SERVICE_ROLE_KEY. Without them it exits 0 with a notice,
  * so forks and fresh clones don't get red scheduled builds.
@@ -11,6 +13,7 @@
 import { cleanupStorage } from "../cleanup.js";
 import { isDue } from "../cron.js";
 import { executeAndPersist, loadActiveFlows, loadFlow, supabaseFromEnv } from "../persist.js";
+import { appendFileSync } from "node:fs";
 import { loadDotEnv, parseArgs, runsDir } from "./common.js";
 
 async function main() {
@@ -22,9 +25,19 @@ async function main() {
     return;
   }
 
+  if (args["cleanup-only"]) {
+    await runCleanup(db);
+    return;
+  }
+
   const flows = typeof args.flow === "string" ? [await loadFlow(db, args.flow)] : (await loadActiveFlows(db)).filter((f) => isDue(f.schedule_cron, f.last_run_at));
   const limit = Number(process.env.FLOWGUARD_MAX_RUNS_PER_TICK || 20);
   console.log(`run-due: ${flows.length} flow(s) due${flows.length > limit ? `, running first ${limit}` : ""}`);
+  if (args.plan) {
+    // Cheap check the workflow runs before downloading a browser: no due flows, no browser.
+    if (process.env.GITHUB_OUTPUT) appendFileSync(process.env.GITHUB_OUTPUT, `due=${flows.length}\n`);
+    return;
+  }
   if (args["dry-run"]) {
     for (const f of flows) console.log(`  - ${f.name} (${f.start_url}, cron ${f.schedule_cron}, last ${f.last_run_at ?? "never"})`);
     return;

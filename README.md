@@ -178,31 +178,4 @@ Optionally add a repository **variable** `FLOWGUARD_RESOLVER` to force a resolve
 
 `.github/workflows/scheduled-runs.yml` then runs every hour (at minute 7). Without the Supabase secrets it logs "skipping" and exits green. To run it now: **Actions → Scheduled flow runs → Run workflow** (you can paste a single flow id). A Slack webhook comes from api.slack.com/apps → your app → **Incoming Webhooks**.
 
-GitHub pauses scheduled workflows on repos with no activity for 60 days; push a commit or press **Run workflow** to wake it up.
-
-### 4. Vercel Hobby (the web app)
-
-1. Sign in at vercel.com with GitHub and **Import** this repository.
-2. Set **Root Directory** to `apps/web`. Vercel detects Next.js and the npm workspace automatically.
-3. Under **Environment Variables** add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` (the last one is used only on the server, to sign replay video links).
-4. Optional, for the **Run** button on Monitors: create a fine-grained GitHub token (github.com → Settings → Developer settings → Fine-grained tokens) for this repository only, with **Actions: Read and write**, and add it as `GITHUB_DISPATCH_TOKEN`. Without it the button explains that flows run on the hourly schedule.
-5. Deploy, then put the resulting URL into the `PUBLIC_APP_URL` GitHub secret so Slack links point at it, and into Supabase's Site URL / Redirect URLs (step 1.5).
-
-### Scaling past GitHub Actions (later)
-
-`apps/worker/src/queue.ts` is a BullMQ worker using the same executor. Point `REDIS_URL` at Redis (Upstash's free tier is enough for low volume), run `npm run queue` on any always-on machine, and enqueue runs with `enqueueFlowRun({ flowId })`.
-
-## Status
-
-This is the first milestone. See the bottom of `docs/PLAN.md` for scope. What works today, verified on real sites:
-
-- the prototype passes the TodoMVC demo flow with the zero-key resolver, and reports FAILED with a screenshot and diagnostics for broken steps (examples in `docs/examples/`);
-- the scanner crawls 15 pages of books.toscrape.com in about 16 seconds;
-- the migration applies cleanly and row-level security keeps workspaces apart;
-- the web app builds and renders every route with no environment variables.
-
-Research behind the product and design decisions: `docs/research/product.md` and `docs/research/design.md` (with before/after screenshots of every page).
-
-Sign-up, login and sign-out (Supabase email + password), the login guard, and live data on Monitors (status, 30-day bars, pass rates, recent runs, **Run** via GitHub Actions) are built and compile, but have not yet been tried against a real Supabase project.
-
-Not built yet: real scans from the website form, email alerts, password reset.
+**Minutes.** GitHub Actions is unlimited on public repos; private repos get 2,000 free minutes a month, billed per started minute per job. Measured on 25 Nov 2026 before the change: a tick that runs one flow took about 69 s (npm install 13 s, Chromium download and system libraries 22 s, the flow 25 s), and a tick with nothing due about 38 s, both of which can bill 1–2 minutes. The workflow now (a) counts due flows with a cheap query before touching the browser and skips the download when nothing is due, and (b) caches the Chromium download between runs (`actions/cache`, keyed on the Playwright version), so only the system libraries are installed on a cache hit. Expect about 1 billed minute per hourly tick, roughly 720 minutes a month, plus about 25 s per extra flow. Check the real numbers under **Actions → a run → Usage**; if they drift up, see `docs/OWNER-TODO.md`.

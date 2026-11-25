@@ -1,5 +1,8 @@
 # Zero-cost scheduler: GitHub Actions cron runs every due flow in a headless browser.
-# Free on public repos; private repos get 2,000 free minutes/month (a 3-step flow takes ~1 min).
+# Free and unlimited on public repos; private repos get 2,000 free minutes/month.
+# Measured Nov 2026: one flow ≈ 69 s per job before caching (npm 13 s, Chromium 22 s, flow 25 s),
+# an idle tick ≈ 38 s. GitHub bills private-repo jobs per started minute, so the Chromium cache
+# and the "nothing due" skip below keep a typical hourly tick inside 1 billed minute.
 #
 # Repo secrets (Settings → Secrets and variables → Actions):
 #   SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY   required to do anything (job skips without them)
@@ -57,15 +60,51 @@ jobs:
 
       - name: Install dependencies
         if: steps.check.outputs.enabled == 'true'
-        run: npm ci
+        run: npm ci --no-audit --no-fund
+
+      # Cheap check first: if no flow is due, skip the browser download entirely.
+      - name: Find due flows
+        id: plan
+        if: steps.check.outputs.enabled == 'true'
+        env:
+          FLOW_ID: ${{ github.event.inputs.flow_id }}
+        run: |
+          if [ -n "$FLOW_ID" ]; then
+            echo "due=1" >> "$GITHUB_OUTPUT"
+          else
+            npm run run-due -w @flowguard/worker -- --plan
+          fi
+
+      - name: Nothing due, only tidy up old recordings
+        if: steps.check.outputs.enabled == 'true' && steps.plan.outputs.due == '0'
+        run: npm run run-due -w @flowguard/worker -- --cleanup-only
+
+      - name: Playwright version
+        id: pw
+        if: steps.plan.outputs.due != '0' && steps.plan.outputs.due != ''
+        run: echo "version=$(node -p "require('playwright/package.json').version")" >> "$GITHUB_OUTPUT"
+
+      # The Chromium download is the slow part of every run; keep it between runs.
+      - name: Cache Playwright browsers
+        id: pw-cache
+        if: steps.plan.outputs.due != '0' && steps.plan.outputs.due != ''
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ steps.pw.outputs.version }}
 
       - name: Install Chromium
-        if: steps.check.outputs.enabled == 'true'
+        if: steps.plan.outputs.due != '0' && steps.plan.outputs.due != '' && steps.pw-cache.outputs.cache-hit != 'true'
         run: npx playwright install --with-deps chromium
         working-directory: apps/worker
 
+      - name: Install Chromium system libraries (browser restored from cache)
+        if: steps.plan.outputs.due != '0' && steps.plan.outputs.due != '' && steps.pw-cache.outputs.cache-hit == 'true'
+        run: npx playwright install-deps chromium
+        working-directory: apps/worker
+
       - name: Run due flows
-        if: steps.check.outputs.enabled == 'true'
+        if: steps.plan.outputs.due != '0' && steps.plan.outputs.due != ''
         env:
           FLOW_ID: ${{ github.event.inputs.flow_id }}
         run: |
@@ -76,7 +115,7 @@ jobs:
           fi
 
       - name: Keep local artifacts for debugging
-        if: always() && steps.check.outputs.enabled == 'true'
+        if: always() && steps.plan.outputs.due != '0' && steps.plan.outputs.due != ''
         uses: actions/upload-artifact@v4
         with:
           name: runs-${{ github.run_id }}
