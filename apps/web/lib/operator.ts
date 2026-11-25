@@ -7,9 +7,9 @@
  */
 export const OPERATOR = {
   /** e.g. "Ada Lovelace (trading as Oluso)" */
-  name: "",
+  name: "Odetunde Abdulmaleek (trading as Oluso)",
   /** City and country is enough for the beta, e.g. "Lagos, Nigeria". Use a full postal address once registered. */
-  place: "",
+  place: "Lagos, Nigeria",
   /** An inbox you read. Data requests must be answered within 30 days. */
   email: "",
 };

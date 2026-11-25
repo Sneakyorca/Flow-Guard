@@ -89,7 +89,7 @@
 .faint { color: var(--faint); }
 .t-ok { color: var(--ok); } .t-bad { color: var(--bad); } .t-warn { color: var(--warn); }
 .mobile-only { display: none; }
-.sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+.sr-only { position: absolute; width: 1px; height: 1px; margin: -1px; padding: 0; border: 0; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 
 .btn {
   display: inline-flex; align-items: center; justify-content: center; gap: 6px;
@@ -436,6 +436,11 @@ table.flows tr.is-failed { background: color-mix(in srgb, var(--bad-bg) 60%, tra
 .toast button:hover { opacity: 1; }
 
 /* ---------- responsive ---------- */
+/* Grid and flex children default to min-width:auto, so one long unbroken string (a URL, a
+   step, a stack trace) can stretch a column past the screen. Let them shrink and wrap. */
+.two-col > *, .replay-grid > *, .builder > *, .health-grid > *, .summary > * { min-width: 0; }
+.mono, .flow-name, .flow-sub, .step-list li span, .runs-table td { overflow-wrap: anywhere; }
+
 @media (max-width: 1080px) {
   .replay-grid { grid-template-columns: 1fr; }
   .builder { grid-template-columns: 1fr; }
@@ -475,6 +480,10 @@ table.flows tr.is-failed { background: color-mix(in srgb, var(--bad-bg) 60%, tra
   .choice { grid-template-columns: 1fr; }
   .report td:first-child { width: 110px; }
   .steps li { grid-template-columns: 24px 1fr 32px; gap: 6px; }
+  .steps li > * { min-width: 0; }
+  .choice button { min-width: 0; }
+  table.flows th, table.flows td { padding-left: 12px; padding-right: 12px; }
+  table.flows td:last-child { padding-left: 4px; width: 1%; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
 

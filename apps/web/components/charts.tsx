@@ -250,7 +250,9 @@ export function DayStrip({ buckets, label }: { buckets: Bucket[]; label: string 
 /** Screen-reader table with the same numbers as the chart. */
 function BucketTable({ caption, buckets, size, duration = false }: { caption: string; buckets: Bucket[]; size: number; duration?: boolean }) {
   return (
-    <table className="sr-only">
+    // The wrapper is what's visually hidden: a <table> ignores width:1px and would widen the page.
+    <div className="sr-only">
+    <table>
       <caption>{caption}</caption>
       <thead><tr><th scope="col">Period</th><th scope="col">Passed</th><th scope="col">Failed</th><th scope="col">Flaky</th>{duration && <th scope="col">Median run time</th>}</tr></thead>
       <tbody>
@@ -263,5 +265,6 @@ function BucketTable({ caption, buckets, size, duration = false }: { caption: st
         ))}
       </tbody>
     </table>
+    </div>
   );
 }
