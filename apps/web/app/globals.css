@@ -468,3 +468,23 @@ table.flows tr.is-failed { background: color-mix(in srgb, var(--bad-bg) 60%, tra
 .cta-band h2 { font-size: 17px; font-weight: 600; }
 .cta-band p { margin-top: 4px; color: var(--muted); font-size: 13.5px; max-width: 60ch; }
 @media (max-width: 860px) { .public-replay { padding: 8px 16px 0; } }
+
+/* ---------- legal pages ---------- */
+.legal { max-width: 720px; margin: 0 auto; padding: 24px 24px 32px; font-size: 15px; line-height: 1.65; color: var(--ink-2); }
+.legal h1 { font-size: clamp(28px, 4vw, 36px); line-height: 1.15; font-weight: 650; letter-spacing: -0.02em; color: var(--ink); }
+.legal-meta { margin-top: 8px; font-size: 13px; color: var(--muted); }
+.legal-intro { margin-top: 20px; }
+.legal-intro p + p, .legal section p + p, .legal section p + ul, .legal section ul + p, .legal section table + p { margin-top: 10px; }
+.legal-toc { margin: 24px 0 8px; padding: 14px 18px; border: 1px solid var(--line); border-radius: 8px; background: var(--surface); font-size: 14px; }
+.legal-toc ol { margin-top: 6px; padding-left: 20px; display: grid; gap: 2px; }
+.legal section { padding-top: 28px; scroll-margin-top: 16px; }
+.legal h2 { font-size: 19px; font-weight: 600; color: var(--ink); margin-bottom: 8px; letter-spacing: -0.01em; }
+.legal h3 { font-size: 15px; font-weight: 600; color: var(--ink); margin: 14px 0 4px; }
+.legal ul { padding-left: 20px; list-style: disc; display: grid; gap: 4px; margin-top: 6px; }
+.legal b { color: var(--ink); font-weight: 600; }
+.legal table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 13.5px; line-height: 1.5; }
+.legal th, .legal td { text-align: left; vertical-align: top; padding: 8px 10px; border: 1px solid var(--line); }
+.legal th { background: var(--surface-2); color: var(--ink); font-weight: 600; }
+.legal .table-wrap { overflow-x: auto; }
+.ph { background: color-mix(in srgb, var(--accent) 18%, transparent); color: var(--ink); padding: 0 3px; border-radius: 3px; font-weight: 500; }
+@media (max-width: 560px) { .legal { padding: 16px 16px 24px; font-size: 14.5px; } }

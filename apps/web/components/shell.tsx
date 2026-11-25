@@ -91,7 +91,11 @@ function Sidebar() {
           {flows.length} of 25 flows used
           <div className="bar"><i style={{ width: `${Math.min(100, (flows.length / 25) * 100)}%` }} /></div>
         </div>
-        <a className="link" href="https://github.com/Sneakyorca/Flow-Guard#readme" target="_blank" rel="noreferrer">Setup guide</a>
+        <span style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
+          <a className="link" href="https://github.com/Sneakyorca/Flow-Guard#readme" target="_blank" rel="noreferrer">Setup guide</a>
+          <Link className="link" href="/terms">Terms</Link>
+          <Link className="link" href="/privacy">Privacy</Link>
+        </span>
         <Link className="me" href="/settings">
           <span className="av" aria-hidden="true">{me.initials}</span>
           <span><b>{me.name}</b><span>{me.email}</span></span>

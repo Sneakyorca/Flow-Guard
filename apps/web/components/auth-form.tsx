@@ -85,6 +85,9 @@ export function AuthForm({ mode }: { mode: Mode }) {
           <input type="password" required minLength={mode === "signup" ? 8 : undefined} autoComplete={mode === "signup" ? "new-password" : "current-password"} value={password} onChange={(e) => setPassword(e.target.value)} disabled={!supabase} />
         </label>
         {error && <p className="auth-error" role="alert"><Icon name="x-circle" size={14} /> {error}</p>}
+        {mode === "signup" && (
+          <p className="muted small" style={{ marginBottom: 12 }}>By creating an account you agree to the <Link className="link" href="/terms">Terms of Service</Link> and confirm you’ve read the <Link className="link" href="/privacy">Privacy Policy</Link>. Only add websites you own or are allowed to test.</p>
+        )}
         <button type="submit" className="btn primary block" disabled={!supabase || busy}>{busy ? c.busy : c.button}</button>
       </form>
       <p className="muted small" style={{ marginTop: 16 }}>
