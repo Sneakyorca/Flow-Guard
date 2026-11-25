@@ -47,8 +47,9 @@ export function Builder() {
         });
         setSaving(false);
         if (error) return notify(`Couldn’t save the flow: ${error.message}`);
-        notify("Saved. It will run at the next scheduled tick.");
-        return router.push("/monitors");
+        notify("Saved. It runs at the next hourly check, or press Run on Monitors to start it now.");
+        router.push("/monitors");
+        return router.refresh();
       }
       setSaving(false);
     }

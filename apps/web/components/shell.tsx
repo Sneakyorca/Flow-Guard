@@ -7,6 +7,8 @@ import { Icon } from "./ui";
 import { ToastProvider } from "./toast";
 import { useWorkspaceName } from "./workspace";
 import { useFlows } from "./flows-store";
+import { LiveDataProvider, useLive } from "./live-data";
+import type { LiveData } from "@/lib/live";
 
 const NAV = [
   { href: "/monitors", match: ["/monitors", "/flows"], icon: "grid", label: "Monitors" },
@@ -38,19 +40,30 @@ function Sidebar() {
   const pathname = usePathname();
   const [workspace] = useWorkspaceName();
   const flows = useFlows();
+  const live = useLive();
   const failing = flows.filter((f) => f.status === "failed").length;
+  const me = live?.user ?? demoUser;
+  const plan = live ? `${live.workspace.plan.charAt(0).toUpperCase()}${live.workspace.plan.slice(1)} plan` : "Starter plan";
+  // Real mode: the replays link opens the newest failure, else the newest run, else Monitors.
+  const replayHref = live
+    ? (() => {
+        const t = flows.find((f) => f.status === "failed")?.replayToken ?? flows.find((f) => f.replayToken)?.replayToken;
+        return t ? `/replay/${t}` : "/monitors";
+      })()
+    : `/replay/${DEMO_REPLAY_ID}`;
   return (
     <aside className="side" aria-label="Main">
       <Link href="/monitors" aria-label="FlowGuard home"><Wordmark /></Link>
       <Link className="ws" href="/settings">
         <span className="av" aria-hidden="true">{workspace.charAt(0).toUpperCase() || "W"}</span>
-        <span><b>{workspace}</b><span>Starter plan</span></span>
+        <span><b>{workspace}</b><span>{plan}</span></span>
       </Link>
       <nav className="nav">
         {NAV.map((item) => {
           const active = item.match.some((m) => pathname.startsWith(m));
+          const href = "failing" in item ? replayHref : item.href;
           return (
-            <Link key={item.href} href={item.href} aria-current={active ? "page" : undefined}>
+            <Link key={item.href} href={href} aria-current={active ? "page" : undefined}>
               <Icon name={item.icon} />
               <span>{item.label}</span>
               {"failing" in item && failing > 0 && <span className="count" aria-label={`${failing} failing`}>{failing}</span>}
@@ -65,9 +78,14 @@ function Sidebar() {
         </div>
         <a className="link" href="https://github.com/Sneakyorca/Flow-Guard#readme" target="_blank" rel="noreferrer">Setup guide</a>
         <Link className="me" href="/settings">
-          <span className="av" aria-hidden="true">{demoUser.initials}</span>
-          <span><b>{demoUser.name}</b><span>{demoUser.email}</span></span>
+          <span className="av" aria-hidden="true">{me.initials}</span>
+          <span><b>{me.name}</b><span>{me.email}</span></span>
         </Link>
+        {live && (
+          <form action="/auth/signout" method="post">
+            <button type="submit" className="link" style={{ fontSize: 13 }}>Sign out</button>
+          </form>
+        )}
       </div>
     </aside>
   );
@@ -88,8 +106,9 @@ function Topbar() {
   );
 }
 
-export function AppShell({ children }: { children: ReactNode }) {
+export function AppShell({ children, live = null }: { children: ReactNode; live?: LiveData | null }) {
   return (
+    <LiveDataProvider value={live}>
     <ToastProvider>
       <a href="#content" className="sr-only">Skip to content</a>
       <div className="shell">
@@ -100,5 +119,6 @@ export function AppShell({ children }: { children: ReactNode }) {
         </div>
       </div>
     </ToastProvider>
+    </LiveDataProvider>
   );
 }

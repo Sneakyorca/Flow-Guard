@@ -71,7 +71,7 @@ Set `FLOWGUARD_RESOLVER`:
 | `groq` | `GROQ_API_KEY` (free at console.groq.com) | `llama-3.3-70b-versatile`, OpenAI-compatible JSON mode. |
 | `anthropic` | `ANTHROPIC_API_KEY` (paid) | `claude-opus-5-5`, structured output, low effort. Optional. |
 
-If an LLM call fails (rate limit, outage) the step falls back to the heuristic, so a free-tier hiccup doesn't page you.
+If an LLM call fails (rate limit, outage) the step falls back to the heuristic, so a free-tier hiccup doesn't page you. With `anthropic`, the chain is Claude → Gemini (if `GEMINI_API_KEY` is set) → heuristic, so runs keep working when paid credits run out or expire.
 
 ## Run it on your Windows PC
 
@@ -148,13 +148,11 @@ Do these in order. Each one is free; none needs a credit card.
 3. Open **Project Settings → API** and note the **Project URL**, the **anon public** key and the **service_role** key. The service role key bypasses security: only ever put it in GitHub secrets, Vercel server env and your local `.env`, never in browser code.
 4. Copy `.env.example` to `.env` in the repo root and fill in `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_URL` and `SUPABASE_SERVICE_ROLE_KEY`.
 
-Until there is a sign-in screen, add a flow by hand: **Authentication → Add user** to create yourself (this also creates your workspace), then in **Table Editor → flows** insert a row with your `workspace_id`, a `start_url`, and `steps_json` like:
+5. Open **Authentication → URL Configuration**. Set **Site URL** to where the app runs (`http://localhost:3000` while testing, your Vercel URL later) and add `http://localhost:3000/auth/callback` and `https://<your-vercel-url>/auth/callback` under **Redirect URLs**. The sign-up confirmation email links there.
 
-```json
-[{"instruction":"Type 'Buy milk' into the new todo input and press Enter"},{"instruction":"Assert 'Buy milk' is in the list"}]
-```
+Now `npm run dev` → **Start free** on the landing page → confirm the email → you land in your own empty workspace. Add a flow with **New flow**. Signed-out visitors to `/monitors`, `/flows`, `/alerts` and `/settings` are sent to `/login`; `/`, `/scan` and `/replay/<token>` stay public.
 
-Check it locally (needs the `.env` above): `npm run run-due -- --dry-run` lists due flows, `npm run run-due` runs them.
+Check scheduled runs locally (needs the `.env` above): `npm run run-due -- --dry-run` lists due flows, `npm run run-due` runs them.
 
 ### 2. Gemini key (optional, free)
 
@@ -187,7 +185,8 @@ GitHub pauses scheduled workflows on repos with no activity for 60 days; push a 
 1. Sign in at vercel.com with GitHub and **Import** this repository.
 2. Set **Root Directory** to `apps/web`. Vercel detects Next.js and the npm workspace automatically.
 3. Under **Environment Variables** add `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY` and `SUPABASE_SERVICE_ROLE_KEY` (the last one is used only on the server, to sign replay video links).
-4. Deploy, then put the resulting URL into the `PUBLIC_APP_URL` GitHub secret so Slack links point at it.
+4. Optional, for the **Run** button on Monitors: create a fine-grained GitHub token (github.com → Settings → Developer settings → Fine-grained tokens) for this repository only, with **Actions: Read and write**, and add it as `GITHUB_DISPATCH_TOKEN`. Without it the button explains that flows run on the hourly schedule.
+5. Deploy, then put the resulting URL into the `PUBLIC_APP_URL` GitHub secret so Slack links point at it, and into Supabase's Site URL / Redirect URLs (step 1.5).
 
 ### Scaling past GitHub Actions (later)
 
@@ -204,4 +203,6 @@ This is the first milestone. See the bottom of `docs/PLAN.md` for scope. What wo
 
 Research behind the product and design decisions: `docs/research/product.md` and `docs/research/design.md` (with before/after screenshots of every page).
 
-Not built yet: sign-in screens, live data on the dashboard, real scans from the website form, email alerts.
+Sign-up, login and sign-out (Supabase email + password), the login guard, and live data on Monitors (status, 30-day bars, pass rates, recent runs, **Run** via GitHub Actions) are built and compile, but have not yet been tried against a real Supabase project.
+
+Not built yet: real scans from the website form, email alerts, password reset.

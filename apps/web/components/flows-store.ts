@@ -1,6 +1,7 @@
 "use client";
 import { useSyncExternalStore } from "react";
 import { demoFlows, type DemoFlow } from "@/lib/demo-data";
+import { useLive } from "./live-data";
 
 /**
  * Demo-mode flow list shared across routes (Monitors, Create flow, sidebar).
@@ -25,12 +26,15 @@ function emit() {
   listeners.forEach((l) => l());
 }
 
+/** The signed-in workspace's flows when Supabase is connected, otherwise the session-only demo list. */
 export function useFlows(): DemoFlow[] {
-  return useSyncExternalStore(
+  const live = useLive();
+  const demo = useSyncExternalStore(
     (l) => { load(); listeners.add(l); return () => listeners.delete(l); },
     () => { load(); return flows; },
     () => demoFlows,
   );
+  return live ? live.flows : demo;
 }
 
 export function addFlow(flow: DemoFlow) {

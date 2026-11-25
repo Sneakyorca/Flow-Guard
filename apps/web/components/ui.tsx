@@ -1,5 +1,5 @@
 import type { ReactNode } from "react";
-import type { Status } from "@/lib/demo-data";
+import type { DayResult, Status } from "@/lib/demo-data";
 
 const paths: Record<string, ReactNode> = {
   mark: <><path d="M4 7.5 12 3l8 4.5v9L12 21l-8-4.5v-9Z" /><path d="M8 12.5h3l1.5-3 2 6 1.5-3h0" /></>,
@@ -47,10 +47,10 @@ export function Button({ children, onClick, variant, size, disabled = false, typ
   );
 }
 
-const STATUS_WORD: Record<Status, string> = { passing: "Passing", failed: "Failing", warning: "Slow" };
+const STATUS_WORD: Record<Status, string> = { passing: "Passing", failed: "Failing", warning: "Slow", pending: "Not run yet" };
 
-export function StatusLabel({ status }: { status: Status }) {
-  return <span className={`status ${status}`}><span className="d" aria-hidden="true" />{STATUS_WORD[status]}</span>;
+export function StatusLabel({ status, text }: { status: Status; text?: string }) {
+  return <span className={`status ${status}`}><span className="d" aria-hidden="true" />{text ?? STATUS_WORD[status]}</span>;
 }
 
 /** Status icon for a single run/step. */
@@ -61,8 +61,18 @@ export function StepIcon({ status }: { status: "passed" | "failed" | "skipped" |
   return <Icon name="minus" className="faint" />;
 }
 
-/** 30 days of daily results, oldest first. Deterministic demo pattern per status. */
-export function Uptime({ status, days = 30 }: { status: Status; days?: number }) {
+/** 30 days of daily results, oldest first. Real `history` when given, otherwise a demo pattern per status. */
+export function Uptime({ status, days = 30, history }: { status: Status; days?: number; history?: DayResult[] }) {
+  if (history) {
+    const failingDays = history.filter((d) => d === "bad").length;
+    const ran = history.filter((d) => d !== "none").length;
+    const label = ran === 0 ? "No runs in the last 30 days" : `Last ${history.length} days: ${failingDays ? `${failingDays} days with failures` : "no failures"}`;
+    return (
+      <div className="uptime" role="img" aria-label={label}>
+        {history.map((d, i) => <i key={i} className={d === "ok" ? "" : d} />)}
+      </div>
+    );
+  }
   const bad = (i: number) => status === "failed" && (i === 11 || i >= days - 1);
   const warn = (i: number) => status === "warning" && (i === 19 || i === 26);
   const failing = Array.from({ length: days }, (_, i) => bad(i)).filter(Boolean).length;

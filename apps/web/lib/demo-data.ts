@@ -3,7 +3,10 @@
  * (docs/design-reference/App.tsx) so the UI can be reviewed without a backend.
  */
 
-export type Status = "passing" | "failed" | "warning";
+export type Status = "passing" | "failed" | "warning" | "pending";
+
+/** One cell of the 30-day bar: a day with failures, a flaky day, a clean day, or no runs. */
+export type DayResult = "ok" | "bad" | "warn" | "none";
 
 export interface DemoFlow {
   id: string;
@@ -14,6 +17,16 @@ export interface DemoFlow {
   detail: string;
   duration: number;
   schedule: string;
+  // ---- Set only for real (Supabase) data; demo rows leave them undefined. ----
+  /** Overrides the status word, e.g. "Flaky". */
+  statusText?: string;
+  /** Text under the status in the "Last run" column. */
+  lastRunLabel?: string;
+  /** Pass rate over the last 30 days, e.g. "96.7%"; "–" when there are no runs. */
+  uptime?: string;
+  history?: DayResult[];
+  /** Share token of the latest run, used for /replay/[token]. */
+  replayToken?: string;
 }
 
 const passingNames = [
