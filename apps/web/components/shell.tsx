@@ -29,10 +29,23 @@ const TITLES: Array<[string, string]> = [
   ["/monitors", "Monitors"],
 ];
 
+/** The "checked path" mark (docs/research/brand.md), drawn with theme tokens. */
+export function BrandMark({ size = 22 }: { size?: number }) {
+  return (
+    <svg className="mark" width={size} height={size} viewBox="0 0 32 32" aria-hidden="true">
+      <rect width="32" height="32" rx="7" fill="var(--ink)" />
+      <path d="M8.5 21.5 15 11l7.5 7" fill="none" stroke="var(--bg)" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx="8.5" cy="21.5" r="2.6" fill="var(--bg)" />
+      <circle cx="15" cy="11" r="2.6" fill="var(--bg)" />
+      <circle cx="22.5" cy="18" r="4" fill="var(--accent)" stroke="var(--ink)" strokeWidth="1.5" />
+    </svg>
+  );
+}
+
 export function Wordmark({ beta = true }: { beta?: boolean }) {
   return (
     <span className="wordmark">
-      <Icon name="mark" className="mark" size={22} />
+      <BrandMark />
       FlowGuard{beta && <small>beta</small>}
     </span>
   );

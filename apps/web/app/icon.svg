@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- "The checked path" (docs/research/brand.md): a route of three points, the last one checked. -->
+  <rect width="32" height="32" rx="7" fill="#17160f"/>
+  <path d="M8.5 21.5 15 11l7.5 7" fill="none" stroke="#f6f5f1" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <circle cx="8.5" cy="21.5" r="2.6" fill="#f6f5f1"/>
+  <circle cx="15" cy="11" r="2.6" fill="#f6f5f1"/>
+  <circle cx="22.5" cy="18" r="4" fill="#e4572e" stroke="#17160f" stroke-width="1.5"/>
+</svg>

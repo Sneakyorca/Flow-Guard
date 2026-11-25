@@ -5,9 +5,16 @@ import type { ReplayData } from "@/lib/demo-data";
 import { Button, Icon, StatusLabel, StepIcon } from "@/components/ui";
 import { useToast } from "@/components/toast";
 import { ReplayPlayer } from "@/components/replay-player";
+import { useRunTracker } from "@/components/run-tracker";
 
-export function ReplayView({ data, shareId }: { data: ReplayData; shareId: string }) {
+/**
+ * owner: signed-in owner of the run (inside the app shell, real "Run again").
+ * public: anyone else with the link (minimal frame, no workspace actions).
+ * demo: the sample incident.
+ */
+export function ReplayView({ data, shareId, mode, flowId }: { data: ReplayData; shareId: string; mode: "owner" | "public" | "demo"; flowId?: string }) {
   const notify = useToast();
+  const tracker = useRunTracker();
   const [tab, setTab] = useState<"console" | "network" | "dom">("console");
   const [rerunning, setRerunning] = useState(false);
   const passed = data.steps.filter((s) => s.status === "passed").length;
@@ -23,6 +30,10 @@ export function ReplayView({ data, shareId }: { data: ReplayData; shareId: strin
     }
   };
   const rerun = () => {
+    if (mode === "owner" && flowId) {
+      void tracker.start(flowId, data.flowName);
+      return;
+    }
     setRerunning(true);
     window.setTimeout(() => { setRerunning(false); notify("Sample re-run finished. In demo mode no site is visited."); }, 1400);
   };
@@ -37,7 +48,8 @@ export function ReplayView({ data, shareId }: { data: ReplayData; shareId: strin
     <>
       <div className="page-head">
         <div>
-          <Link className="back" href="/monitors"><Icon name="back" size={14} /> Monitors</Link>
+          {mode === "owner" && flowId && <Link className="back" href={`/flows/${flowId}`}><Icon name="back" size={14} /> {data.flowName}</Link>}
+          {mode === "demo" && <Link className="back" href="/monitors"><Icon name="back" size={14} /> Monitors</Link>}
           <h1>{data.flowName}</h1>
           <p className="mono" style={{ display: "flex", gap: 12, flexWrap: "wrap", alignItems: "center" }}>
             <StatusLabel status={failed ? "failed" : "passing"} />
@@ -45,7 +57,10 @@ export function ReplayView({ data, shareId }: { data: ReplayData; shareId: strin
           </p>
         </div>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          <Button onClick={rerun} disabled={rerunning}><Icon name="refresh" size={14} />{rerunning ? "Running…" : "Run again"}</Button>
+          {mode !== "public" && (() => {
+            const busy = rerunning || (mode === "owner" && !!flowId && tracker.running(flowId));
+            return <Button onClick={rerun} disabled={busy}><Icon name="refresh" size={14} className={busy ? "spin" : undefined} />{busy ? "Running…" : "Run again"}</Button>;
+          })()}
           <Button variant="primary" onClick={copy}><Icon name="link" size={14} /> Copy share link</Button>
         </div>
       </div>

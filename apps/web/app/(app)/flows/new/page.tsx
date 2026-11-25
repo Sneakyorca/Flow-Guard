@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Builder } from "./builder";
 
-export const metadata: Metadata = { title: "Create critical flow" };
+export const metadata: Metadata = { title: "New flow" };
 
 export default function NewFlowPage() {
   return <Builder />;
