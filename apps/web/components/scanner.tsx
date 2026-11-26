@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { supabaseConfigured } from "@/lib/supabase/env";
 import { DEMO_REPLAY_ID, sampleScan } from "@/lib/demo-data";
-import { Button } from "./ui";
+import { Button, Icon } from "./ui";
 import { ReplayPlayer } from "./replay-player";
 
 const CHECKS = [
@@ -26,20 +26,36 @@ export function Scanner({ inApp = false }: { inApp?: boolean }) {
   async function start(e: React.FormEvent) {
     e.preventDefault();
     setMessage("");
+    // People type "myshop.com" or paste "www.myshop.com": add https:// for them.
+    const raw = scanUrl.trim();
+    const url = /^https?:\/\//i.test(raw) ? raw : `https://${raw.replace(/^\/+/, "")}`;
+    try {
+      const u = new URL(url);
+      if (!u.hostname.includes(".")) throw new Error("no dot");
+    } catch {
+      setMessage("That doesn’t look like a website address. Try something like myshop.com.");
+      return;
+    }
+    if (url !== scanUrl) setScanUrl(url);
     if (!supabaseConfigured) {
       setState("running");
       window.setTimeout(() => setState("done"), 1600);
       return;
     }
     setState("running");
-    const res = await fetch("/api/scans", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url: scanUrl }) }).catch(() => null);
-    const body = (await res?.json().catch(() => ({}))) as { token?: string; message?: string } | undefined;
-    if (res?.ok && body?.token) return router.push(`/scan/${body.token}`);
+    const res = await fetch("/api/scans", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ url }) }).catch(() => null);
+    const body = (await res?.json().catch(() => ({}))) as { token?: string; message?: string; reused?: boolean } | undefined;
+    if (res?.ok && body?.token) return router.push(`/scan/${body.token}${body.reused ? "?reused=1" : ""}`);
     setState("idle");
-    setMessage(body?.message ?? "Couldn’t reach the server. Try again in a minute.");
+    setMessage(
+      body?.message ??
+        (res && res.status >= 500
+          ? "Our scanner couldn’t start just now. Try again in a minute."
+          : "Couldn’t reach Oluso. Check your connection and try again."),
+    );
   }
   let host = "";
-  try { host = new URL(scanUrl).hostname; } catch {}
+  try { host = new URL(/^https?:\/\//i.test(scanUrl) ? scanUrl : `https://${scanUrl}`).hostname; } catch {}
 
   return (
     <>
@@ -55,12 +71,17 @@ export function Scanner({ inApp = false }: { inApp?: boolean }) {
         )}
         <form className="scan-form" onSubmit={start}>
           <label className="sr-only" htmlFor="scan-url">Website address</label>
-          <input id="scan-url" className="input" required type="text" inputMode="url" autoComplete="url" value={scanUrl} onChange={(e) => setScanUrl(e.target.value)} placeholder="https://yourshop.com" />
+          <input id="scan-url" className="input" required type="text" inputMode="url" autoComplete="url" autoCapitalize="none" spellCheck={false} value={scanUrl} onChange={(e) => { setScanUrl(e.target.value); if (message) setMessage(""); }} placeholder="yourshop.com" disabled={state === "running"} aria-invalid={message ? true : undefined} aria-describedby={message ? "scan-msg" : undefined} />
           <Button variant={inApp ? "primary" : "accent"} size="lg" type="submit" disabled={state === "running"}>
-            {state === "running" ? "Scanning…" : "Scan my site"}
+            {state === "running" ? <><Icon name="refresh" size={16} className="spin" /> Starting your scan…</> : "Scan my site"}
           </Button>
         </form>
-        {message && <p className="auth-error" role="alert" style={{ marginTop: 10 }}>{message}</p>}
+        {message && (
+          <p id="scan-msg" className="form-alert" role="alert">
+            <Icon name="alert-circle" size={16} />
+            <span>{message}</span>
+          </p>
+        )}
         <p className="scan-small">
           {supabaseConfigured
             ? <>Free, no account. We open up to 15 public pages once, on a phone-sized screen. Only scan sites you’re happy for us to visit; see the <Link className="link" href="/terms">terms</Link>.</>

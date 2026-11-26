@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { cache } from "react";
 import { PublicHeader } from "@/components/public-header";
 import { LandingFooter } from "@/components/scanner";
+import { ToastProvider } from "@/components/toast";
 import { getPublicScan } from "@/lib/scan-report";
 import { ScanResult } from "./scan-result";
 
@@ -18,16 +19,17 @@ export async function generateMetadata({ params }: { params: Promise<{ token: st
 export const dynamic = "force-dynamic";
 
 /** Public report for one free scan. Refreshes itself until the scan finishes. */
-export default async function ScanReportPage({ params }: { params: Promise<{ token: string }> }) {
+export default async function ScanReportPage({ params, searchParams }: { params: Promise<{ token: string }>; searchParams: Promise<{ reused?: string }> }) {
   const s = await scan((await params).token);
   if (!s) notFound();
+  const reused = (await searchParams).reused === "1";
   return (
-    <>
+    <ToastProvider>
       <PublicHeader extra={{ href: "/", label: "Scan another site" }} />
       <main className="public-replay" style={{ maxWidth: 860 }}>
-        <ScanResult scan={s} />
+        <ScanResult scan={s} reused={reused} />
       </main>
       <LandingFooter />
-    </>
+    </ToastProvider>
   );
 }
