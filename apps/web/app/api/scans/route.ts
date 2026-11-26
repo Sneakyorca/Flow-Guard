@@ -58,7 +58,11 @@ export async function POST(req: Request) {
   if (!started.ok) {
     await admin.from("public_scans").delete().eq("id", row.id);
     return NextResponse.json(
-      { message: started.reason === "no-token" ? "Scans from the website aren’t switched on yet (the server can’t start GitHub Actions)." : "Couldn’t start the scan. Try again in a minute." },
+      {
+        message: started.reason === "no-token"
+          ? "Scans from the website aren’t switched on yet (the server can’t start GitHub Actions)."
+          : `Our scanner couldn’t start (${started.hint ?? "GitHub refused"}). Try again later.`,
+      },
       { status: started.reason === "no-token" ? 501 : 502 },
     );
   }

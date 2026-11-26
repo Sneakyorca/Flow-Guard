@@ -29,7 +29,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     );
   }
   if (!result.ok) {
-    return NextResponse.json({ message: `GitHub refused to start the run (${result.status ?? "no answer"}). Check the token’s repo access and Actions permission.` }, { status: 502 });
+    return NextResponse.json({ message: `Couldn’t start the run: ${result.hint ?? `GitHub answered ${result.status ?? "nothing"}`}.` }, { status: 502 });
   }
   return NextResponse.json({ message: `“${flow.name}” is starting on GitHub Actions. The result usually lands in 2–3 minutes; this page updates by itself.` }, { status: 202 });
 }
